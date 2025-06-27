@@ -23,29 +23,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   TextEditingController lastNameController = TextEditingController();
   TextEditingController addressController = TextEditingController();
 
-  void pickUploadProfilePic() async {
-    final image = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      maxHeight: 512,
-      maxWidth: 512,
-      imageQuality: 90,
-    );
+  void _getProfilePic() async {
+    DocumentSnapshot doc =
+        await FirebaseFirestore.instance
+            .collection("Employee")
+            .doc(User.id)
+            .get();
 
-    Reference ref = FirebaseStorage.instance.ref().child(
-      "${User.employeeId.toLowerCase()}_profilepic.jpg",
-    );
+    final data = doc.data() as Map<String, dynamic>?; // cast safely
 
-    await ref.putFile(File(image!.path));
-
-    ref.getDownloadURL().then((value) async {
-      setState(() {
-        User.profilePicLink = value;
-      });
-
-      await FirebaseFirestore.instance
-          .collection("Employee")
-          .doc(User.id)
-          .update({'profilePic': value});
+    setState(() {
+      if (data != null &&
+          data.containsKey('profilePic') &&
+          (data['profilePic'] as String).isNotEmpty) {
+        User.profilePicLink = data['profilePic'];
+      } else {
+        User.profilePicLink = ""; // no profile pic available
+      }
     });
   }
 
@@ -60,7 +54,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             GestureDetector(
               onTap: () {
-                pickUploadProfilePic();
+                _getProfilePic();
               },
               child: Container(
                 margin: const EdgeInsets.only(top: 80, bottom: 24),
@@ -73,7 +67,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: Center(
                   child:
-                      User.profilePicLink == " "
+                      User.profilePicLink.isEmpty
                           ? const Icon(
                             Icons.person,
                             color: Colors.white,
@@ -81,7 +75,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           )
                           : ClipRRect(
                             borderRadius: BorderRadius.circular(20),
-                            child: Image.network(User.profilePicLink),
+                            child: Image.network(
+                              User.profilePicLink,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(
+                                  Icons.person,
+                                  color: Colors.white,
+                                  size: 80,
+                                );
+                              },
+                            ),
                           ),
                 ),
               ),

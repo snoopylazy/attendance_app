@@ -1,4 +1,5 @@
 import 'package:attendance_app/homescreen.dart';
+import 'package:attendance_app/model/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
@@ -106,16 +107,23 @@ class _LoginScreenState extends State<LoginScreen> {
                           sharedPreferences =
                               await SharedPreferences.getInstance();
 
-                          sharedPreferences.setString('employeeId', id).then((
-                            _,
-                          ) {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => HomeScreen(),
-                              ),
-                            );
-                          });
+                          // Save both employeeId and Firestore document ID
+                          sharedPreferences.setString('employeeId', id);
+                          sharedPreferences.setString(
+                            'userDocId',
+                            snap.docs[0].id,
+                          ); // ADD THIS
+
+                          // Also update User model for quick access (optional)
+                          User.employeeId = id;
+                          User.id = snap.docs[0].id;
+
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => HomeScreen(),
+                            ),
+                          );
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(

@@ -393,6 +393,8 @@ class _TodayScreenState extends State<TodayScreen> {
                                     .where('id', isEqualTo: User.employeeId)
                                     .get();
 
+                            print("snapp $snap");
+
                             DocumentSnapshot snap2 =
                                 await FirebaseFirestore.instance
                                     .collection("Employee")
@@ -406,17 +408,13 @@ class _TodayScreenState extends State<TodayScreen> {
                                     .get();
 
                             try {
-                              String checkIn = snap2['checkIn'];
+                              String checkIn =
+                                  snap2['checkIn']; // record exists
 
-                              setState(() {
-                                checkOut = DateFormat(
-                                  'hh:mm',
-                                ).format(DateTime.now());
-                              });
-
+                              // update check-out
                               await FirebaseFirestore.instance
                                   .collection("Employee")
-                                  .doc(snap.docs[0].id)
+                                  .doc(User.id)
                                   .collection("Record")
                                   .doc(
                                     DateFormat(
@@ -432,15 +430,10 @@ class _TodayScreenState extends State<TodayScreen> {
                                     'checkInLocation': location,
                                   });
                             } catch (e) {
-                              setState(() {
-                                checkIn = DateFormat(
-                                  'hh:mm',
-                                ).format(DateTime.now());
-                              });
-
+                              // first-time check-in
                               await FirebaseFirestore.instance
                                   .collection("Employee")
-                                  .doc(snap.docs[0].id)
+                                  .doc(User.id)
                                   .collection("Record")
                                   .doc(
                                     DateFormat(

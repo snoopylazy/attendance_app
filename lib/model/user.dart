@@ -1,6 +1,6 @@
 class User {
-  static String id = " ";
-  static String employeeId = " ";
+  static String id = "tveQHA7aBoUF7XqWKEPV"; // Firestore document ID
+  static String employeeId = " "; // Public Employee ID (e.g., A123456)
   static String firstName = " ";
   static String lastName = " ";
   static String birthDate = " ";

@@ -38,6 +38,37 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<void> _initializeUser() async {
+    // Wait to get User.id first
+    QuerySnapshot snap =
+        await FirebaseFirestore.instance
+            .collection("Employee")
+            .where('id', isEqualTo: User.employeeId)
+            .get();
+
+    if (snap.docs.isNotEmpty) {
+      User.id = snap.docs[0].id;
+
+      // Then fetch credentials and profile
+      DocumentSnapshot doc =
+          await FirebaseFirestore.instance
+              .collection("Employee")
+              .doc(User.id)
+              .get();
+
+      setState(() {
+        User.canEdit = doc['canEdit'];
+        User.firstName = doc['firstName'];
+        User.lastName = doc['lastName'];
+        User.birthDate = doc['birthDate'];
+        User.address = doc['address'];
+        User.profilePicLink = doc['profilePic'];
+      });
+    } else {
+      debugPrint("No user found with employeeId ${User.employeeId}");
+    }
+  }
+
   void _getCredentials() async {
     try {
       DocumentSnapshot doc =
