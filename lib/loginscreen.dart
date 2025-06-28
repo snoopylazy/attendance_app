@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -24,7 +25,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
   late SharedPreferences sharedPreferences;
 
+  bool _obscurePassword = true;
+
   bool _showSplash = true;
+
+  // URl from telegram
+  Future<void> openTelegram() async {
+    final Uri url = Uri.parse("https://t.me/BenjaminKirby_BenTennyson");
+
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      throw Exception('Could not launch $url');
+    }
+  }
 
   @override
   void initState() {
@@ -87,11 +99,13 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header
           isKeyboardVisible
               ? SizedBox(height: screenHeight / 16)
               : Container(
-                height: screenHeight / 2.5,
+                height: screenHeight / 2.8,
                 width: screenWidth,
                 decoration: BoxDecoration(
                   color: primary,
@@ -103,113 +117,144 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Icon(
                     Icons.person,
                     color: Colors.white,
-                    size: screenWidth / 5,
+                    size: screenWidth / 4,
                   ),
                 ),
               ),
-          Container(
-            margin: EdgeInsets.only(
-              top: screenHeight / 15,
-              bottom: screenHeight / 20,
+
+          // Title
+          Padding(
+            padding: EdgeInsets.only(
+              top: screenHeight / 20,
+              left: screenWidth / 12,
             ),
             child: Text(
-              "Login",
+              "Welcome Back!",
               style: TextStyle(
-                fontSize: screenWidth / 18,
+                fontSize: screenWidth / 14,
                 fontFamily: "NexaBold",
               ),
             ),
           ),
-          Container(
-            alignment: Alignment.centerLeft,
-            margin: EdgeInsets.symmetric(horizontal: screenWidth / 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                fieldTitle("Employee ID"),
-                customField("Enter your employee id", idController, false),
-                fieldTitle("Password"),
-                customField("Enter your password", passController, true),
-                GestureDetector(
-                  onTap: () async {
-                    FocusScope.of(context).unfocus();
-                    String id = idController.text.trim();
-                    String password = passController.text.trim();
 
-                    if (id.isEmpty) {
-                      showCustomSnackBar("Employee id is still empty!");
-                    } else if (password.isEmpty) {
-                      showCustomSnackBar("Password is still empty!");
-                    } else {
-                      try {
-                        QuerySnapshot snap =
-                            await FirebaseFirestore.instance
-                                .collection("Employee")
-                                .where('id', isEqualTo: id)
-                                .get();
+          const SizedBox(height: 10),
 
-                        if (snap.docs.isEmpty) {
-                          showCustomSnackBar("Employee id does not exist!");
-                          return;
-                        }
+          // Login Form
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: screenWidth / 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  fieldTitle("Employee ID"),
+                  customField("Enter your employee id", idController, false),
 
-                        if (password == snap.docs[0]['password']) {
-                          sharedPreferences =
-                              await SharedPreferences.getInstance();
+                  SizedBox(height: screenHeight * 0.03),
 
-                          // Save employeeId and Firestore doc ID
-                          sharedPreferences.setString('employeeId', id);
-                          sharedPreferences.setString(
-                            'userDocId',
-                            snap.docs[0].id,
-                          );
+                  fieldTitle("Password"),
+                  customField("Enter your password", passController, true),
 
-                          User.employeeId = id;
-                          User.id = snap.docs[0].id;
-
-                          showCustomSnackBar(
-                            "Login successful!",
-                            isError: false,
-                          );
-
-                          await Future.delayed(const Duration(seconds: 1));
-
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const HomeScreen(),
-                            ),
-                          );
-                        } else {
-                          showCustomSnackBar("Password is not correct!");
-                        }
-                      } catch (e) {
-                        showCustomSnackBar("Error occurred!");
-                      }
-                    }
-                  },
-                  child: Container(
-                    height: 60,
-                    width: screenWidth,
-                    margin: EdgeInsets.only(top: screenHeight / 40),
-                    decoration: BoxDecoration(
-                      color: primary,
-                      borderRadius: const BorderRadius.all(Radius.circular(30)),
-                    ),
-                    child: Center(
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: openTelegram,
                       child: Text(
-                        "LOGIN",
+                        "Forgot Password?",
                         style: TextStyle(
-                          fontFamily: "NexaBold",
-                          fontSize: screenWidth / 26,
-                          color: Colors.white,
-                          letterSpacing: 2,
+                          fontFamily: "NexaLight",
+                          color: Colors.grey.shade600,
+                          fontSize: screenWidth / 30,
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+
+                  GestureDetector(
+                    onTap: () async {
+                      FocusScope.of(context).unfocus();
+                      String id = idController.text.trim();
+                      String password = passController.text.trim();
+
+                      if (id.isEmpty) {
+                        showCustomSnackBar("Employee id is still empty!");
+                      } else if (password.isEmpty) {
+                        showCustomSnackBar("Password is still empty!");
+                      } else {
+                        try {
+                          QuerySnapshot snap =
+                              await FirebaseFirestore.instance
+                                  .collection("Employee")
+                                  .where('id', isEqualTo: id)
+                                  .get();
+
+                          if (snap.docs.isEmpty) {
+                            showCustomSnackBar("Employee id does not exist!");
+                            return;
+                          }
+
+                          if (password == snap.docs[0]['password']) {
+                            sharedPreferences =
+                                await SharedPreferences.getInstance();
+
+                            sharedPreferences.setString('employeeId', id);
+                            sharedPreferences.setString(
+                              'userDocId',
+                              snap.docs[0].id,
+                            );
+
+                            User.employeeId = id;
+                            User.id = snap.docs[0].id;
+
+                            showCustomSnackBar(
+                              "Login successful!",
+                              isError: false,
+                            );
+
+                            await Future.delayed(const Duration(seconds: 1));
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const HomeScreen(),
+                              ),
+                            );
+                          } else {
+                            showCustomSnackBar("Password is not correct!");
+                          }
+                        } catch (e) {
+                          showCustomSnackBar("Error occurred!");
+                        }
+                      }
+                    },
+                    child: Container(
+                      height: 55,
+                      width: double.infinity,
+                      margin: EdgeInsets.only(top: screenHeight / 30),
+                      decoration: BoxDecoration(
+                        color: primary,
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: [
+                          BoxShadow(
+                            color: primary.withOpacity(0.4),
+                            offset: Offset(0, 4),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          "LOGIN",
+                          style: TextStyle(
+                            fontFamily: "NexaBold",
+                            fontSize: screenWidth / 25,
+                            color: Colors.white,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -217,6 +262,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // Label
   Widget fieldTitle(String title) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -227,14 +273,15 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // Input Form
   Widget customField(
     String hint,
     TextEditingController controller,
-    bool obscure,
+    bool isPassword,
   ) {
     return Container(
       width: screenWidth,
-      margin: EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.all(Radius.circular(12)),
@@ -248,26 +295,49 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       child: Row(
         children: [
+          // Left-side icon
           Container(
             width: screenWidth / 6,
-            child: Icon(Icons.person, color: primary, size: screenWidth / 15),
+            child: Icon(
+              isPassword ? Icons.lock : Icons.person,
+              color: primary,
+              size: screenWidth / 15,
+            ),
           ),
+
+          // TextField + optional eye icon
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(right: screenWidth / 12),
+              padding: EdgeInsets.only(right: screenWidth / 30),
               child: TextFormField(
                 controller: controller,
+                obscureText: isPassword ? _obscurePassword : false,
                 enableSuggestions: false,
                 autocorrect: false,
+                maxLines: 1,
                 decoration: InputDecoration(
                   contentPadding: EdgeInsets.symmetric(
                     vertical: screenHeight / 35,
                   ),
                   border: InputBorder.none,
                   hintText: hint,
+                  suffixIcon:
+                      isPassword
+                          ? IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                              color: Colors.grey,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          )
+                          : null,
                 ),
-                maxLines: 1,
-                obscureText: obscure,
               ),
             ),
           ),

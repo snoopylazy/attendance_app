@@ -38,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  // Fetch User
   Future<void> _initializeUser() async {
     // Wait to get User.id first
     QuerySnapshot snap =
@@ -69,6 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // GetPermissioon
   void _getCredentials() async {
     try {
       DocumentSnapshot doc =
@@ -88,6 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // GetUser pic
   void _getProfilePic() async {
     DocumentSnapshot doc =
         await FirebaseFirestore.instance
@@ -99,6 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  // Currrent Laction
   void _startLocationService() async {
     LocationService().initialize();
 
@@ -115,6 +119,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  // Fetch ID
   Future<void> getId() async {
     QuerySnapshot snap =
         await FirebaseFirestore.instance

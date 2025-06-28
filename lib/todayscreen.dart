@@ -7,6 +7,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:intl/intl.dart';
 import 'package:slide_to_act/slide_to_act.dart';
+import 'package:location/location.dart';
+import 'package:attendance_app/services/location_service.dart'; // Assuming LocationService is in a separate file
 
 class TodayScreen extends StatefulWidget {
   const TodayScreen({Key? key}) : super(key: key);
@@ -29,17 +31,28 @@ class _TodayScreenState extends State<TodayScreen> {
   Color primary = const Color(0xffeef444c);
 
   final GlobalKey<SlideActionState> _slideKey = GlobalKey<SlideActionState>();
+  final LocationService _locationService = LocationService();
 
   @override
   void initState() {
     super.initState();
+    _initializeLocationService();
     _getRecord();
     _getOfficeCode();
     _loadTodayRecord();
   }
 
+  // Initialize LocationService
+  Future<void> _initializeLocationService() async {
+    bool isInitialized = await _locationService.initialize();
+    if (!isInitialized) {
+      showCustomSnackBar("Unable to initialize location services!");
+    }
+  }
+
   // Method to show custom SnackBar
   void showCustomSnackBar(String message, {bool isError = true}) {
+    if (!mounted) return; // Prevent SnackBar if not mounted
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -64,6 +77,7 @@ class _TodayScreenState extends State<TodayScreen> {
     );
   }
 
+  // Show Reason Dialog
   Future<String?> _showReasonDialog(bool isLateCheckIn) async {
     TextEditingController reasonController = TextEditingController();
 
@@ -85,14 +99,13 @@ class _TodayScreenState extends State<TodayScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(null); // Cancelled
+                Navigator.of(context).pop(null);
               },
               child: const Text("Cancel"),
             ),
             ElevatedButton(
               onPressed: () {
                 if (reasonController.text.trim().isEmpty) {
-                  // Optionally: show an error or disable button if empty
                   return;
                 }
                 Navigator.of(context).pop(reasonController.text.trim());
@@ -142,6 +155,7 @@ class _TodayScreenState extends State<TodayScreen> {
     }
   }
 
+  // Fetch Office Code
   void _getOfficeCode() async {
     DocumentSnapshot snap =
         await FirebaseFirestore.instance
@@ -153,6 +167,32 @@ class _TodayScreenState extends State<TodayScreen> {
     });
   }
 
+  // Fetch Location and Convert to String
+  Future<void> _getLocation() async {
+    try {
+      LocationData? locData = await _locationService.getLocation();
+      if (locData == null ||
+          locData.latitude == null ||
+          locData.longitude == null) {
+        showCustomSnackBar("Unable to fetch location!");
+        return;
+      }
+
+      List<Placemark> placemark = await placemarkFromCoordinates(
+        locData.latitude!,
+        locData.longitude!,
+      );
+
+      setState(() {
+        checkInLocation =
+            "${placemark[0].street}, ${placemark[0].administrativeArea}, ${placemark[0].postalCode}, ${placemark[0].country}";
+      });
+    } catch (e) {
+      // showCustomSnackBar("Error getting location!");
+    }
+  }
+
+  // Scan QR Code and Handle Check-in/Check-out
   Future<void> scanQRandCheck() async {
     String result = " ";
 
@@ -168,165 +208,95 @@ class _TodayScreenState extends State<TodayScreen> {
       return;
     }
 
+    if (!mounted) return; // Prevent further execution if not mounted
+
     setState(() {
       scanResult = result;
     });
 
     if (scanResult == officeCode) {
-      if (User.lat != 0) {
-        await _getLocation();
+      LocationData? locData = await _locationService.getLocation();
+      if (locData == null ||
+          locData.latitude == null ||
+          locData.longitude == null) {
+        showCustomSnackBar("Location not available!");
+        return;
+      }
 
-        QuerySnapshot snap =
-            await FirebaseFirestore.instance
-                .collection("Employee")
-                .where('id', isEqualTo: User.employeeId)
-                .get();
+      await _getLocation();
 
-        DocumentSnapshot snap2 =
-            await FirebaseFirestore.instance
-                .collection("Employee")
-                .doc(snap.docs[0].id)
-                .collection("Record")
-                .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
-                .get();
+      QuerySnapshot snap =
+          await FirebaseFirestore.instance
+              .collection("Employee")
+              .where('id', isEqualTo: User.employeeId)
+              .get();
 
-        try {
-          String checkIn = snap2['checkIn'];
+      if (snap.docs.isEmpty) {
+        showCustomSnackBar("Employee not found!");
+        return;
+      }
 
-          setState(() {
-            checkOut = DateFormat('hh:mm').format(DateTime.now());
-            checkOutLocation = checkInLocation; // Use current location
-          });
-
+      DocumentSnapshot snap2 =
           await FirebaseFirestore.instance
               .collection("Employee")
               .doc(snap.docs[0].id)
               .collection("Record")
               .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
-              .update({
-                'date': Timestamp.now(),
-                'checkIn': checkIn,
-                'checkOut': checkOut,
-                'checkInLocation': snap2['checkInLocation'] ?? checkInLocation,
-                'checkOutLocation': checkOutLocation,
-              });
+              .get();
 
-          showCustomSnackBar(
-            "Check-out recorded successfully!",
-            isError: false,
-          );
-        } catch (e) {
-          setState(() {
-            checkIn = DateFormat('hh:mm').format(DateTime.now());
-            checkInLocation = checkInLocation; // Use current location
-          });
+      try {
+        String checkInTime = snap2['checkIn'];
 
-          await FirebaseFirestore.instance
-              .collection("Employee")
-              .doc(snap.docs[0].id)
-              .collection("Record")
-              .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
-              .set({
-                'date': Timestamp.now(),
-                'checkIn': checkIn,
-                'checkOut': "--/--",
-                'checkInLocation': checkInLocation,
-                'checkOutLocation': " ",
-              });
-
-          showCustomSnackBar("Check-in recorded successfully!", isError: false);
-        }
-      } else {
-        Timer(const Duration(seconds: 3), () async {
-          await _getLocation();
-
-          QuerySnapshot snap =
-              await FirebaseFirestore.instance
-                  .collection("Employee")
-                  .where('id', isEqualTo: User.employeeId)
-                  .get();
-
-          DocumentSnapshot snap2 =
-              await FirebaseFirestore.instance
-                  .collection("Employee")
-                  .doc(snap.docs[0].id)
-                  .collection("Record")
-                  .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
-                  .get();
-
-          try {
-            String checkIn = snap2['checkIn'];
-
-            setState(() {
-              checkOut = DateFormat('hh:mm').format(DateTime.now());
-              checkOutLocation = checkInLocation; // Use current location
-            });
-
-            await FirebaseFirestore.instance
-                .collection("Employee")
-                .doc(snap.docs[0].id)
-                .collection("Record")
-                .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
-                .update({
-                  'date': Timestamp.now(),
-                  'checkIn': checkIn,
-                  'checkOut': checkOut,
-                  'checkInLocation':
-                      snap2['checkInLocation'] ?? checkInLocation,
-                  'checkOutLocation': checkOutLocation,
-                });
-
-            showCustomSnackBar(
-              "Check-out recorded successfully!",
-              isError: false,
-            );
-          } catch (e) {
-            setState(() {
-              checkIn = DateFormat('hh:mm').format(DateTime.now());
-              checkInLocation = checkInLocation; // Use current location
-            });
-
-            await FirebaseFirestore.instance
-                .collection("Employee")
-                .doc(snap.docs[0].id)
-                .collection("Record")
-                .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
-                .set({
-                  'date': Timestamp.now(),
-                  'checkIn': checkIn,
-                  'checkOut': "--/--",
-                  'checkInLocation': checkInLocation,
-                  'checkOutLocation': " ",
-                });
-
-            showCustomSnackBar(
-              "Check-in recorded successfully!",
-              isError: false,
-            );
-          }
+        setState(() {
+          checkOut = DateFormat('hh:mm').format(DateTime.now());
+          checkOutLocation = checkInLocation;
         });
+
+        await FirebaseFirestore.instance
+            .collection("Employee")
+            .doc(snap.docs[0].id)
+            .collection("Record")
+            .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
+            .update({
+              'date': Timestamp.now(),
+              'checkIn': checkInTime,
+              'checkOut': checkOut,
+              'checkInLocation': snap2['checkInLocation'] ?? checkInLocation,
+              'checkOutLocation': checkOutLocation,
+              'latitude': locData.latitude,
+              'longitude': locData.longitude,
+            });
+
+        showCustomSnackBar("Check-out recorded successfully!", isError: false);
+      } catch (e) {
+        setState(() {
+          checkIn = DateFormat('hh:mm').format(DateTime.now());
+          checkInLocation = checkInLocation;
+        });
+
+        await FirebaseFirestore.instance
+            .collection("Employee")
+            .doc(snap.docs[0].id)
+            .collection("Record")
+            .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
+            .set({
+              'date': Timestamp.now(),
+              'checkIn': checkIn,
+              'checkOut': "--/--",
+              'checkInLocation': checkInLocation,
+              'checkOutLocation': " ",
+              'latitude': locData.latitude,
+              'longitude': locData.longitude,
+            });
+
+        showCustomSnackBar("Check-in recorded successfully!", isError: false);
       }
     } else {
       showCustomSnackBar("Invalid QR code!");
     }
   }
 
-  Future<void> _getLocation() async {
-    try {
-      List<Placemark> placemark = await placemarkFromCoordinates(
-        User.lat,
-        User.long,
-      );
-
-      setState(() {
-        checkInLocation =
-            "${placemark[0].street}, ${placemark[0].administrativeArea}, ${placemark[0].postalCode}, ${placemark[0].country}";
-      });
-    } catch (e) {
-      // showCustomSnackBar("Error getting location!");
-    }
-  }
-
+  // Fetch Record
   void _getRecord() async {
     try {
       QuerySnapshot snap =
@@ -334,6 +304,8 @@ class _TodayScreenState extends State<TodayScreen> {
               .collection("Employee")
               .where('id', isEqualTo: User.employeeId)
               .get();
+
+      if (snap.docs.isEmpty) return;
 
       DocumentSnapshot snap2 =
           await FirebaseFirestore.instance
@@ -513,8 +485,6 @@ class _TodayScreenState extends State<TodayScreen> {
                   margin: const EdgeInsets.only(top: 24, bottom: 12),
                   child: Builder(
                     builder: (context) {
-                      final GlobalKey<SlideActionState> key = GlobalKey();
-
                       return SlideAction(
                         key: _slideKey,
                         text:
@@ -529,9 +499,16 @@ class _TodayScreenState extends State<TodayScreen> {
                         outerColor: Colors.white,
                         innerColor: primary,
                         onSubmit: () async {
-                          if (User.lat == 0) {
+                          if (!mounted)
+                            return; // Prevent execution if not mounted
+
+                          LocationData? locData =
+                              await _locationService.getLocation();
+                          if (locData == null ||
+                              locData.latitude == null ||
+                              locData.longitude == null) {
                             showCustomSnackBar("Location not available!");
-                            _slideKey.currentState?.reset();
+                            if (mounted) _slideKey.currentState?.reset();
                             return;
                           }
 
@@ -542,13 +519,11 @@ class _TodayScreenState extends State<TodayScreen> {
                           bool isEarlyCheckOut = false;
 
                           if (checkIn == "--/--") {
-                            // About to check in, check if late (after 7:00 AM)
                             if (now.hour > 7 ||
                                 (now.hour == 7 && now.minute > 0)) {
                               isLateCheckIn = true;
                             }
                           } else if (checkOut == "--/--") {
-                            // About to check out, check if early (before 12:00 PM)
                             if (now.hour < 12) {
                               isEarlyCheckOut = true;
                             }
@@ -558,10 +533,8 @@ class _TodayScreenState extends State<TodayScreen> {
 
                           if (isLateCheckIn || isEarlyCheckOut) {
                             reason = await _showReasonDialog(isLateCheckIn);
-
                             if (reason == null) {
-                              // User cancelled popup, reset slide and return
-                              _slideKey.currentState?.reset();
+                              if (mounted) _slideKey.currentState?.reset();
                               return;
                             }
                           }
@@ -571,6 +544,12 @@ class _TodayScreenState extends State<TodayScreen> {
                                   .collection("Employee")
                                   .where('id', isEqualTo: User.employeeId)
                                   .get();
+
+                          if (snap.docs.isEmpty) {
+                            showCustomSnackBar("Employee not found!");
+                            if (mounted) _slideKey.currentState?.reset();
+                            return;
+                          }
 
                           DocumentSnapshot snap2 =
                               await FirebaseFirestore.instance
@@ -585,7 +564,6 @@ class _TodayScreenState extends State<TodayScreen> {
                                   .get();
 
                           if (checkIn == "--/--") {
-                            // Check-in logic
                             String newCheckIn = DateFormat(
                               'hh:mm',
                             ).format(DateTime.now());
@@ -597,7 +575,7 @@ class _TodayScreenState extends State<TodayScreen> {
 
                             await FirebaseFirestore.instance
                                 .collection("Employee")
-                                .doc(User.id)
+                                .doc(snap.docs[0].id)
                                 .collection("Record")
                                 .doc(
                                   DateFormat(
@@ -610,9 +588,9 @@ class _TodayScreenState extends State<TodayScreen> {
                                   'checkOut': "--/--",
                                   'checkInLocation': checkInLocation,
                                   'checkOutLocation': " ",
-                                  'reason':
-                                      reason ??
-                                      "", // Save reason or empty string
+                                  'latitude': locData.latitude,
+                                  'longitude': locData.longitude,
+                                  'reason': reason ?? "",
                                 });
 
                             showCustomSnackBar(
@@ -620,7 +598,6 @@ class _TodayScreenState extends State<TodayScreen> {
                               isError: false,
                             );
                           } else if (checkOut == "--/--") {
-                            // Check-out logic
                             String oldCheckIn = snap2['checkIn'];
                             String newCheckOut = DateFormat(
                               'hh:mm',
@@ -633,7 +610,7 @@ class _TodayScreenState extends State<TodayScreen> {
 
                             await FirebaseFirestore.instance
                                 .collection("Employee")
-                                .doc(User.id)
+                                .doc(snap.docs[0].id)
                                 .collection("Record")
                                 .doc(
                                   DateFormat(
@@ -648,10 +625,9 @@ class _TodayScreenState extends State<TodayScreen> {
                                       snap2['checkInLocation'] ??
                                       checkInLocation,
                                   'checkOutLocation': checkOutLocation,
-                                  'reason':
-                                      reason ??
-                                      snap2['reason'] ??
-                                      "", // update reason if provided
+                                  'latitude': locData.latitude,
+                                  'longitude': locData.longitude,
+                                  'reason': reason ?? snap2['reason'] ?? "",
                                 });
 
                             showCustomSnackBar(
@@ -660,7 +636,7 @@ class _TodayScreenState extends State<TodayScreen> {
                             );
                           }
 
-                          _slideKey.currentState?.reset();
+                          if (mounted) _slideKey.currentState?.reset();
                         },
                       );
                     },

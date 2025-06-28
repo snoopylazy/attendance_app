@@ -25,38 +25,35 @@ class _CalendarScreenState extends State<CalendarScreen> {
     screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Container(
-              alignment: Alignment.centerLeft,
-              margin: const EdgeInsets.only(top: 32),
-              child: Text(
+      backgroundColor: Colors.grey[100],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
                 "My Attendance",
                 style: TextStyle(
                   fontFamily: "NexaBold",
-                  fontSize: screenWidth / 18,
+                  fontSize: screenWidth / 16,
+                  color: Colors.grey[800],
+                  letterSpacing: 1.2,
                 ),
               ),
-            ),
-            Stack(
-              children: [
-                Container(
-                  alignment: Alignment.centerLeft,
-                  margin: const EdgeInsets.only(top: 32),
-                  child: Text(
-                    _month,
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _month ?? "Select Month",
                     style: TextStyle(
                       fontFamily: "NexaBold",
-                      fontSize: screenWidth / 18,
+                      fontSize: screenWidth / 16,
+                      color: Colors.grey[900],
                     ),
                   ),
-                ),
-                Container(
-                  alignment: Alignment.centerRight,
-                  margin: const EdgeInsets.only(top: 32),
-                  child: GestureDetector(
+                  GestureDetector(
                     onTap: () async {
                       final month = await showMonthYearPicker(
                         context: context,
@@ -95,149 +92,218 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         });
                       }
                     },
-                    child: Text(
-                      "Pick a Month",
-                      style: TextStyle(
-                        fontFamily: "NexaBold",
-                        fontSize: screenWidth / 18,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(color: Colors.grey.shade300),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.calendar_month,
+                            color: Colors.grey[700],
+                            size: screenWidth / 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _month ?? "Pick a Month",
+                            style: TextStyle(
+                              fontFamily: "NexaBold",
+                              fontSize: screenWidth / 20,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_drop_down,
+                            color: Colors.grey[700],
+                            size: screenWidth / 20,
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            SizedBox(
-              height: screenHeight / 1.45,
-              child: StreamBuilder<QuerySnapshot>(
-                stream:
-                    FirebaseFirestore.instance
-                        .collection("Employee")
-                        .doc(User.id)
-                        .collection("Record")
-                        .snapshots(),
-                builder: (
-                  BuildContext context,
-                  AsyncSnapshot<QuerySnapshot> snapshot,
-                ) {
-                  if (snapshot.hasData) {
+                ],
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                height: screenHeight / 1.45,
+                child: StreamBuilder<QuerySnapshot>(
+                  stream:
+                      FirebaseFirestore.instance
+                          .collection("Employee")
+                          .doc(User.id)
+                          .collection("Record")
+                          .snapshots(),
+                  builder: (
+                    BuildContext context,
+                    AsyncSnapshot<QuerySnapshot> snapshot,
+                  ) {
+                    if (!snapshot.hasData) {
+                      return Center(
+                        child: CircularProgressIndicator(color: primary),
+                      );
+                    }
+
                     final snap = snapshot.data!.docs;
-                    return ListView.builder(
-                      itemCount: snap.length,
+                    final filteredRecords =
+                        snap.where((doc) {
+                          final recordDate = doc['date'].toDate();
+                          final recordMonth = DateFormat(
+                            'MMMM',
+                          ).format(recordDate);
+                          return recordMonth == _month;
+                        }).toList();
+
+                    if (filteredRecords.isEmpty) {
+                      return Center(
+                        child: Text(
+                          "No records for $_month",
+                          style: TextStyle(
+                            fontFamily: "NexaRegular",
+                            fontSize: screenWidth / 22,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      );
+                    }
+
+                    return ListView.separated(
+                      itemCount: filteredRecords.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 16),
                       itemBuilder: (context, index) {
-                        return DateFormat(
-                                  'MMMM',
-                                ).format(snap[index]['date'].toDate()) ==
-                                _month
-                            ? Container(
-                              margin: EdgeInsets.only(
-                                top: index > 0 ? 12 : 0,
-                                left: 6,
-                                right: 6,
+                        final record = filteredRecords[index];
+                        final recordDate = record['date'].toDate();
+
+                        return Container(
+                          height: 150,
+                          margin: const EdgeInsets.symmetric(horizontal: 6),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(24),
+                            gradient: LinearGradient(
+                              colors: [
+                                primary.withOpacity(0.85),
+                                primary.withOpacity(0.65),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: primary.withOpacity(0.3),
+                                blurRadius: 12,
+                                offset: const Offset(3, 6),
                               ),
-                              height: 150,
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black26,
-                                    blurRadius: 10,
-                                    offset: Offset(2, 2),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: screenWidth * 0.25,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(24),
+                                    bottomLeft: Radius.circular(24),
                                   ),
-                                ],
-                                borderRadius: BorderRadius.all(
-                                  Radius.circular(20),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    DateFormat('EEE\ndd').format(recordDate),
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontFamily: "NexaBold",
+                                      fontSize: screenWidth / 18,
+                                      color: Colors.white,
+                                      height: 1.2,
+                                    ),
+                                  ),
                                 ),
                               ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Expanded(
-                                    child: Container(
-                                      margin: const EdgeInsets.only(),
-                                      decoration: BoxDecoration(
-                                        color: primary,
-                                        borderRadius: const BorderRadius.all(
-                                          Radius.circular(20),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Check In",
+                                        style: TextStyle(
+                                          fontFamily: "NexaRegular",
+                                          fontSize: screenWidth / 24,
+                                          color: Colors.white70,
                                         ),
                                       ),
-                                      child: Center(
-                                        child: Text(
-                                          DateFormat('EE\ndd').format(
-                                            snap[index]['date'].toDate(),
-                                          ),
-                                          style: TextStyle(
-                                            fontFamily: "NexaBold",
-                                            fontSize: screenWidth / 18,
-                                            color: Colors.white,
-                                          ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        record['checkIn'],
+                                        style: TextStyle(
+                                          fontFamily: "NexaBold",
+                                          fontSize: screenWidth / 18,
+                                          color: Colors.white,
                                         ),
                                       ),
-                                    ),
+                                    ],
                                   ),
-                                  Expanded(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          "Check In",
-                                          style: TextStyle(
-                                            fontFamily: "NexaRegular",
-                                            fontSize: screenWidth / 20,
-                                            color: Colors.black54,
-                                          ),
-                                        ),
-                                        Text(
-                                          snap[index]['checkIn'],
-                                          style: TextStyle(
-                                            fontFamily: "NexaBold",
-                                            fontSize: screenWidth / 18,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          "Check Out",
-                                          style: TextStyle(
-                                            fontFamily: "NexaRegular",
-                                            fontSize: screenWidth / 20,
-                                            color: Colors.black54,
-                                          ),
-                                        ),
-                                        Text(
-                                          snap[index]['checkOut'],
-                                          style: TextStyle(
-                                            fontFamily: "NexaBold",
-                                            fontSize: screenWidth / 18,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
-                            )
-                            : const SizedBox();
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Check Out",
+                                        style: TextStyle(
+                                          fontFamily: "NexaRegular",
+                                          fontSize: screenWidth / 24,
+                                          color: Colors.white70,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        record['checkOut'],
+                                        style: TextStyle(
+                                          fontFamily: "NexaBold",
+                                          fontSize: screenWidth / 18,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
                       },
                     );
-                  } else {
-                    return const SizedBox();
-                  }
-                },
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
