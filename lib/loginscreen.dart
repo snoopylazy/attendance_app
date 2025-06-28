@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:attendance_app/homescreen.dart';
 import 'package:attendance_app/model/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -23,14 +24,66 @@ class _LoginScreenState extends State<LoginScreen> {
 
   late SharedPreferences sharedPreferences;
 
+  bool _showSplash = true;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Show splash for 3 seconds then show login form
+    Timer(const Duration(seconds: 3), () {
+      setState(() {
+        _showSplash = false;
+      });
+    });
+  }
+
+  // Method to show custom SnackBar
+  void showCustomSnackBar(String message, {bool isError = true}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: screenWidth / 24,
+            fontFamily: "NexaBold",
+          ),
+          textAlign: TextAlign.center,
+        ),
+        backgroundColor: isError ? Colors.red[700] : Colors.green[600],
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.only(
+          top: screenHeight * 0.05,
+          left: screenWidth * 0.1,
+          right: screenWidth * 0.1,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final bool isKeyboardVisible = KeyboardVisibilityProvider.isKeyboardVisible(
-      context,
-    );
     screenHeight = MediaQuery.of(context).size.height;
     screenWidth = MediaQuery.of(context).size.width;
 
+    if (_showSplash) {
+      // Splash screen UI
+      return Scaffold(
+        backgroundColor: primary,
+        body: Center(
+          child: Icon(Icons.person, color: Colors.white, size: screenWidth / 3),
+        ),
+      );
+    }
+
+    final bool isKeyboardVisible = KeyboardVisibilityProvider.isKeyboardVisible(
+      context,
+    );
+
+    // Login form UI
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: Column(
@@ -84,70 +137,54 @@ class _LoginScreenState extends State<LoginScreen> {
                     String password = passController.text.trim();
 
                     if (id.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Employee id is still empty!"),
-                        ),
-                      );
+                      showCustomSnackBar("Employee id is still empty!");
                     } else if (password.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Password is still empty!"),
-                        ),
-                      );
+                      showCustomSnackBar("Password is still empty!");
                     } else {
-                      QuerySnapshot snap =
-                          await FirebaseFirestore.instance
-                              .collection("Employee")
-                              .where('id', isEqualTo: id)
-                              .get();
-
                       try {
+                        QuerySnapshot snap =
+                            await FirebaseFirestore.instance
+                                .collection("Employee")
+                                .where('id', isEqualTo: id)
+                                .get();
+
+                        if (snap.docs.isEmpty) {
+                          showCustomSnackBar("Employee id does not exist!");
+                          return;
+                        }
+
                         if (password == snap.docs[0]['password']) {
                           sharedPreferences =
                               await SharedPreferences.getInstance();
 
-                          // Save both employeeId and Firestore document ID
+                          // Save employeeId and Firestore doc ID
                           sharedPreferences.setString('employeeId', id);
                           sharedPreferences.setString(
                             'userDocId',
                             snap.docs[0].id,
-                          ); // ADD THIS
+                          );
 
-                          // Also update User model for quick access (optional)
                           User.employeeId = id;
                           User.id = snap.docs[0].id;
+
+                          showCustomSnackBar(
+                            "Login successful!",
+                            isError: false,
+                          );
+
+                          await Future.delayed(const Duration(seconds: 1));
 
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => HomeScreen(),
+                              builder: (context) => const HomeScreen(),
                             ),
                           );
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Password is not correct!"),
-                            ),
-                          );
+                          showCustomSnackBar("Password is not correct!");
                         }
                       } catch (e) {
-                        String error = " ";
-
-                        if (e.toString() ==
-                            "RangeError (index): Invalid value: Valid value range is empty: 0") {
-                          setState(() {
-                            error = "Employee id does not exist!";
-                          });
-                        } else {
-                          setState(() {
-                            error = "Error occurred!";
-                          });
-                        }
-
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(SnackBar(content: Text(error)));
+                        showCustomSnackBar("Error occurred!");
                       }
                     }
                   },

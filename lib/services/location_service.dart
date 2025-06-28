@@ -25,6 +25,18 @@ class LocationService {
     }
   }
 
+  Future<String> getLocationString() async {
+    _locData = await location.getLocation();
+    double? lat = _locData.latitude;
+    double? long = _locData.longitude;
+
+    if (lat != null && long != null) {
+      return "Lat: ${lat.toStringAsFixed(5)}, Long: ${long.toStringAsFixed(5)}";
+    } else {
+      return "Unknown Location";
+    }
+  }
+
   Future<double?> getLatitude() async {
     _locData = await location.getLocation();
     return _locData.latitude;

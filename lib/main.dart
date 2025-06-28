@@ -28,6 +28,8 @@ class MyApp extends StatelessWidget {
   }
 }
 
+
+// Auto check
 class AuthCheck extends StatefulWidget {
   const AuthCheck({Key? key}) : super(key: key);
 

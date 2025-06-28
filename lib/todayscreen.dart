@@ -21,11 +21,14 @@ class _TodayScreenState extends State<TodayScreen> {
 
   String checkIn = "--/--";
   String checkOut = "--/--";
-  String location = " ";
+  String checkInLocation = " ";
+  String checkOutLocation = " ";
   String scanResult = " ";
   String officeCode = " ";
 
   Color primary = const Color(0xffeef444c);
+
+  final GlobalKey<SlideActionState> _slideKey = GlobalKey<SlideActionState>();
 
   @override
   void initState() {
@@ -33,6 +36,73 @@ class _TodayScreenState extends State<TodayScreen> {
     _getRecord();
     _getOfficeCode();
     _loadTodayRecord();
+  }
+
+  // Method to show custom SnackBar
+  void showCustomSnackBar(String message, {bool isError = true}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: screenWidth / 24,
+            fontFamily: "NexaBold",
+          ),
+          textAlign: TextAlign.center,
+        ),
+        backgroundColor: isError ? Colors.red[700] : Colors.green[600],
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.only(
+          top: screenHeight * 0.05,
+          left: screenWidth * 0.1,
+          right: screenWidth * 0.1,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  Future<String?> _showReasonDialog(bool isLateCheckIn) async {
+    TextEditingController reasonController = TextEditingController();
+
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            isLateCheckIn ? "Late Check-in Reason" : "Early Check-out Reason",
+          ),
+          content: TextField(
+            controller: reasonController,
+            decoration: const InputDecoration(
+              hintText: "Please enter your reason",
+            ),
+            maxLines: 3,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(null); // Cancelled
+              },
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (reasonController.text.trim().isEmpty) {
+                  // Optionally: show an error or disable button if empty
+                  return;
+                }
+                Navigator.of(context).pop(reasonController.text.trim());
+              },
+              child: const Text("Submit"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   // Fetch Data
@@ -59,11 +129,15 @@ class _TodayScreenState extends State<TodayScreen> {
       setState(() {
         checkIn = snap2['checkIn'] ?? "--/--";
         checkOut = snap2['checkOut'] ?? "--/--";
+        checkInLocation = snap2['checkInLocation'] ?? " ";
+        checkOutLocation = snap2['checkOutLocation'] ?? " ";
       });
     } else {
       setState(() {
         checkIn = "--/--";
         checkOut = "--/--";
+        checkInLocation = " ";
+        checkOutLocation = " ";
       });
     }
   }
@@ -90,7 +164,8 @@ class _TodayScreenState extends State<TodayScreen> {
         ScanMode.QR,
       );
     } catch (e) {
-      print("error");
+      showCustomSnackBar("Error scanning QR code!");
+      return;
     }
 
     setState(() {
@@ -99,7 +174,7 @@ class _TodayScreenState extends State<TodayScreen> {
 
     if (scanResult == officeCode) {
       if (User.lat != 0) {
-        _getLocation();
+        await _getLocation();
 
         QuerySnapshot snap =
             await FirebaseFirestore.instance
@@ -120,6 +195,7 @@ class _TodayScreenState extends State<TodayScreen> {
 
           setState(() {
             checkOut = DateFormat('hh:mm').format(DateTime.now());
+            checkOutLocation = checkInLocation; // Use current location
           });
 
           await FirebaseFirestore.instance
@@ -130,12 +206,19 @@ class _TodayScreenState extends State<TodayScreen> {
               .update({
                 'date': Timestamp.now(),
                 'checkIn': checkIn,
-                'checkOut': DateFormat('hh:mm').format(DateTime.now()),
-                'checkInLocation': location,
+                'checkOut': checkOut,
+                'checkInLocation': snap2['checkInLocation'] ?? checkInLocation,
+                'checkOutLocation': checkOutLocation,
               });
+
+          showCustomSnackBar(
+            "Check-out recorded successfully!",
+            isError: false,
+          );
         } catch (e) {
           setState(() {
             checkIn = DateFormat('hh:mm').format(DateTime.now());
+            checkInLocation = checkInLocation; // Use current location
           });
 
           await FirebaseFirestore.instance
@@ -145,14 +228,17 @@ class _TodayScreenState extends State<TodayScreen> {
               .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
               .set({
                 'date': Timestamp.now(),
-                'checkIn': DateFormat('hh:mm').format(DateTime.now()),
+                'checkIn': checkIn,
                 'checkOut': "--/--",
-                'checkOutLocation': location,
+                'checkInLocation': checkInLocation,
+                'checkOutLocation': " ",
               });
+
+          showCustomSnackBar("Check-in recorded successfully!", isError: false);
         }
       } else {
         Timer(const Duration(seconds: 3), () async {
-          _getLocation();
+          await _getLocation();
 
           QuerySnapshot snap =
               await FirebaseFirestore.instance
@@ -173,6 +259,7 @@ class _TodayScreenState extends State<TodayScreen> {
 
             setState(() {
               checkOut = DateFormat('hh:mm').format(DateTime.now());
+              checkOutLocation = checkInLocation; // Use current location
             });
 
             await FirebaseFirestore.instance
@@ -183,12 +270,20 @@ class _TodayScreenState extends State<TodayScreen> {
                 .update({
                   'date': Timestamp.now(),
                   'checkIn': checkIn,
-                  'checkOut': DateFormat('hh:mm').format(DateTime.now()),
-                  'checkInLocation': location,
+                  'checkOut': checkOut,
+                  'checkInLocation':
+                      snap2['checkInLocation'] ?? checkInLocation,
+                  'checkOutLocation': checkOutLocation,
                 });
+
+            showCustomSnackBar(
+              "Check-out recorded successfully!",
+              isError: false,
+            );
           } catch (e) {
             setState(() {
               checkIn = DateFormat('hh:mm').format(DateTime.now());
+              checkInLocation = checkInLocation; // Use current location
             });
 
             await FirebaseFirestore.instance
@@ -198,26 +293,38 @@ class _TodayScreenState extends State<TodayScreen> {
                 .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
                 .set({
                   'date': Timestamp.now(),
-                  'checkIn': DateFormat('hh:mm').format(DateTime.now()),
+                  'checkIn': checkIn,
                   'checkOut': "--/--",
-                  'checkOutLocation': location,
+                  'checkInLocation': checkInLocation,
+                  'checkOutLocation': " ",
                 });
+
+            showCustomSnackBar(
+              "Check-in recorded successfully!",
+              isError: false,
+            );
           }
         });
       }
+    } else {
+      showCustomSnackBar("Invalid QR code!");
     }
   }
 
-  void _getLocation() async {
-    List<Placemark> placemark = await placemarkFromCoordinates(
-      User.lat,
-      User.long,
-    );
+  Future<void> _getLocation() async {
+    try {
+      List<Placemark> placemark = await placemarkFromCoordinates(
+        User.lat,
+        User.long,
+      );
 
-    setState(() {
-      location =
-          "${placemark[0].street}, ${placemark[0].administrativeArea}, ${placemark[0].postalCode}, ${placemark[0].country}";
-    });
+      setState(() {
+        checkInLocation =
+            "${placemark[0].street}, ${placemark[0].administrativeArea}, ${placemark[0].postalCode}, ${placemark[0].country}";
+      });
+    } catch (e) {
+      // showCustomSnackBar("Error getting location!");
+    }
   }
 
   void _getRecord() async {
@@ -237,13 +344,17 @@ class _TodayScreenState extends State<TodayScreen> {
               .get();
 
       setState(() {
-        checkIn = snap2['checkIn'];
-        checkOut = snap2['checkOut'];
+        checkIn = snap2['checkIn'] ?? "--/--";
+        checkOut = snap2['checkOut'] ?? "--/--";
+        checkInLocation = snap2['checkInLocation'] ?? " ";
+        checkOutLocation = snap2['checkOutLocation'] ?? " ";
       });
     } catch (e) {
       setState(() {
         checkIn = "--/--";
         checkOut = "--/--";
+        checkInLocation = " ";
+        checkOutLocation = " ";
       });
     }
   }
@@ -405,6 +516,7 @@ class _TodayScreenState extends State<TodayScreen> {
                       final GlobalKey<SlideActionState> key = GlobalKey();
 
                       return SlideAction(
+                        key: _slideKey,
                         text:
                             checkIn == "--/--"
                                 ? "Slide to Check In"
@@ -416,92 +528,139 @@ class _TodayScreenState extends State<TodayScreen> {
                         ),
                         outerColor: Colors.white,
                         innerColor: primary,
-                        key: key,
                         onSubmit: () async {
-                          if (User.lat != 0) {
-                            _getLocation();
-
-                            QuerySnapshot snap =
-                                await FirebaseFirestore.instance
-                                    .collection("Employee")
-                                    .where('id', isEqualTo: User.employeeId)
-                                    .get();
-
-                            DocumentSnapshot snap2 =
-                                await FirebaseFirestore.instance
-                                    .collection("Employee")
-                                    .doc(snap.docs[0].id)
-                                    .collection("Record")
-                                    .doc(
-                                      DateFormat(
-                                        'dd MMMM yyyy',
-                                      ).format(DateTime.now()),
-                                    )
-                                    .get();
-
-                            try {
-                              String oldCheckIn = snap2['checkIn'];
-
-                              String newCheckOut = DateFormat(
-                                'hh:mm',
-                              ).format(DateTime.now());
-
-                              // Update Firestore
-                              await FirebaseFirestore.instance
-                                  .collection("Employee")
-                                  .doc(User.id)
-                                  .collection("Record")
-                                  .doc(
-                                    DateFormat(
-                                      'dd MMMM yyyy',
-                                    ).format(DateTime.now()),
-                                  )
-                                  .update({
-                                    'date': Timestamp.now(),
-                                    'checkIn': oldCheckIn,
-                                    'checkOut': newCheckOut,
-                                    'checkInLocation': location,
-                                  });
-
-                              // Update local state
-                              setState(() {
-                                checkIn = oldCheckIn;
-                                checkOut = newCheckOut;
-                              });
-                            } catch (e) {
-                              String newCheckIn = DateFormat(
-                                'hh:mm',
-                              ).format(DateTime.now());
-
-                              // First time check-in, create record
-                              await FirebaseFirestore.instance
-                                  .collection("Employee")
-                                  .doc(User.id)
-                                  .collection("Record")
-                                  .doc(
-                                    DateFormat(
-                                      'dd MMMM yyyy',
-                                    ).format(DateTime.now()),
-                                  )
-                                  .set({
-                                    'date': Timestamp.now(),
-                                    'checkIn': newCheckIn,
-                                    'checkOut': "--/--",
-                                    'checkOutLocation': location,
-                                  });
-
-                              // Update local state
-                              setState(() {
-                                checkIn = newCheckIn;
-                                checkOut = "--/--";
-                              });
-                            }
-
-                            key.currentState!.reset();
-                          } else {
-                            // your existing else block
-                            // after updates, do similar setState to update UI state
+                          if (User.lat == 0) {
+                            showCustomSnackBar("Location not available!");
+                            _slideKey.currentState?.reset();
+                            return;
                           }
+
+                          await _getLocation();
+
+                          TimeOfDay now = TimeOfDay.now();
+                          bool isLateCheckIn = false;
+                          bool isEarlyCheckOut = false;
+
+                          if (checkIn == "--/--") {
+                            // About to check in, check if late (after 7:00 AM)
+                            if (now.hour > 7 ||
+                                (now.hour == 7 && now.minute > 0)) {
+                              isLateCheckIn = true;
+                            }
+                          } else if (checkOut == "--/--") {
+                            // About to check out, check if early (before 12:00 PM)
+                            if (now.hour < 12) {
+                              isEarlyCheckOut = true;
+                            }
+                          }
+
+                          String? reason;
+
+                          if (isLateCheckIn || isEarlyCheckOut) {
+                            reason = await _showReasonDialog(isLateCheckIn);
+
+                            if (reason == null) {
+                              // User cancelled popup, reset slide and return
+                              _slideKey.currentState?.reset();
+                              return;
+                            }
+                          }
+
+                          QuerySnapshot snap =
+                              await FirebaseFirestore.instance
+                                  .collection("Employee")
+                                  .where('id', isEqualTo: User.employeeId)
+                                  .get();
+
+                          DocumentSnapshot snap2 =
+                              await FirebaseFirestore.instance
+                                  .collection("Employee")
+                                  .doc(snap.docs[0].id)
+                                  .collection("Record")
+                                  .doc(
+                                    DateFormat(
+                                      'dd MMMM yyyy',
+                                    ).format(DateTime.now()),
+                                  )
+                                  .get();
+
+                          if (checkIn == "--/--") {
+                            // Check-in logic
+                            String newCheckIn = DateFormat(
+                              'hh:mm',
+                            ).format(DateTime.now());
+
+                            setState(() {
+                              checkIn = newCheckIn;
+                              checkInLocation = checkInLocation;
+                            });
+
+                            await FirebaseFirestore.instance
+                                .collection("Employee")
+                                .doc(User.id)
+                                .collection("Record")
+                                .doc(
+                                  DateFormat(
+                                    'dd MMMM yyyy',
+                                  ).format(DateTime.now()),
+                                )
+                                .set({
+                                  'date': Timestamp.now(),
+                                  'checkIn': newCheckIn,
+                                  'checkOut': "--/--",
+                                  'checkInLocation': checkInLocation,
+                                  'checkOutLocation': " ",
+                                  'reason':
+                                      reason ??
+                                      "", // Save reason or empty string
+                                });
+
+                            showCustomSnackBar(
+                              "Check-in recorded successfully!",
+                              isError: false,
+                            );
+                          } else if (checkOut == "--/--") {
+                            // Check-out logic
+                            String oldCheckIn = snap2['checkIn'];
+                            String newCheckOut = DateFormat(
+                              'hh:mm',
+                            ).format(DateTime.now());
+
+                            setState(() {
+                              checkOut = newCheckOut;
+                              checkOutLocation = checkInLocation;
+                            });
+
+                            await FirebaseFirestore.instance
+                                .collection("Employee")
+                                .doc(User.id)
+                                .collection("Record")
+                                .doc(
+                                  DateFormat(
+                                    'dd MMMM yyyy',
+                                  ).format(DateTime.now()),
+                                )
+                                .update({
+                                  'date': Timestamp.now(),
+                                  'checkIn': oldCheckIn,
+                                  'checkOut': newCheckOut,
+                                  'checkInLocation':
+                                      snap2['checkInLocation'] ??
+                                      checkInLocation,
+                                  'checkOutLocation': checkOutLocation,
+                                  'reason':
+                                      reason ??
+                                      snap2['reason'] ??
+                                      "", // update reason if provided
+                                });
+
+                            showCustomSnackBar(
+                              "Check-out recorded successfully!",
+                              isError: false,
+                            );
+                          }
+
+                          _slideKey.currentState?.reset();
                         },
                       );
                     },
@@ -518,7 +677,12 @@ class _TodayScreenState extends State<TodayScreen> {
                     ),
                   ),
                 ),
-            location != " " ? Text("Location: " + location) : const SizedBox(),
+            checkInLocation != " "
+                ? Text("Check-in Location: $checkInLocation")
+                : const SizedBox(),
+            checkOutLocation != " "
+                ? Text("Check-out Location: $checkOutLocation")
+                : const SizedBox(),
             GestureDetector(
               onTap: () {
                 scanQRandCheck();
