@@ -1,3 +1,4 @@
+import 'package:attendance_app/absent_request_screen.dart';
 import 'package:attendance_app/calendarscreen.dart';
 import 'package:attendance_app/model/user.dart';
 import 'package:attendance_app/profilescreen.dart';
@@ -25,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<IconData> navigationIcons = [
     FontAwesomeIcons.calendarAlt,
     FontAwesomeIcons.check,
+    FontAwesomeIcons.paperPlane,
     FontAwesomeIcons.user,
   ];
 
@@ -143,6 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           new CalendarScreen(),
           new TodayScreen(),
+          new AbsentRequestScreen(),
           new ProfileScreen(),
         ],
       ),
