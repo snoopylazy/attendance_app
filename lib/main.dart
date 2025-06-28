@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
 
-      home: KeyboardVisibilityProvider(child: const LoginScreen()),
+      home: KeyboardVisibilityProvider(child: const AuthCheck()),
     );
   }
 }
@@ -36,40 +36,32 @@ class AuthCheck extends StatefulWidget {
 }
 
 class _AuthCheckState extends State<AuthCheck> {
-  bool userAvailable = false;
-  late SharedPreferences sharedPreferences;
+  bool? userAvailable;
 
   @override
   void initState() {
     super.initState();
-
-    _getCurrentUser();
+    _checkLogin();
   }
 
-  void _getCurrentUser() async {
-    sharedPreferences = await SharedPreferences.getInstance();
-    try {
-      String? employeeId = sharedPreferences.getString('employeeid');
-      if (employeeId != null) {
-        setState(() {
-          User.employeeId = employeeId;
-          userAvailable = true;
-        });
-      } else {
-        setState(() {
-          userAvailable = false;
-        });
+  Future<void> _checkLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? employeeId = prefs.getString(
+      'employeeId',
+    ); // match this key exactly!
+    setState(() {
+      userAvailable = employeeId != null;
+      if (userAvailable == true) {
+        User.employeeId = employeeId!;
       }
-    } catch (e) {
-      print("Error getting current user: $e");
-      setState(() {
-        userAvailable = false;
-      });
-    }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return userAvailable ? const HomeScreen() : const LoginScreen();
+    if (userAvailable == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    return userAvailable! ? const HomeScreen() : const LoginScreen();
   }
 }
