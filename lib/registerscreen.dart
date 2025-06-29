@@ -40,6 +40,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
+  void showCustomSnackBar(String message, {bool isError = true}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red[700] : Colors.green[600],
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
     if (_birthDate == null) {
@@ -79,14 +91,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final docRef = await FirebaseFirestore.instance
           .collection('Employee')
           .add({
+            'id': employeeId, // Add this field for login compatibility
             'employeeId': employeeId,
             'firstName': _firstNameController.text.trim(),
             'lastName': _lastNameController.text.trim(),
             'birthDate': DateFormat('yyyy-MM-dd').format(_birthDate!),
             'address': _addressController.text.trim(),
             'password': _passwordController.text.trim(),
-            'profilePic': '', // default empty
-            'canEdit': true, // default permission
+            'profilePic': '',
+            'canEdit': true,
           });
 
       // Save to local user model

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:attendance_app/registerscreen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -17,6 +18,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   TextEditingController idController = TextEditingController();
   TextEditingController passController = TextEditingController();
+
+  bool _isLoading = false;
 
   double screenHeight = 0;
   double screenWidth = 0;
@@ -50,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  // Method to show custom SnackBar
+  // Method to show custom SnackBar (KEEP ONLY ONE VERSION)
   void showCustomSnackBar(String message, {bool isError = true}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -170,67 +173,101 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
 
                   GestureDetector(
-                    onTap: () async {
-                      FocusScope.of(context).unfocus();
-                      String id = idController.text.trim();
-                      String password = passController.text.trim();
+                    onTap:
+                        _isLoading
+                            ? null
+                            : () async {
+                              setState(() {
+                                _isLoading = true;
+                              });
 
-                      if (id.isEmpty) {
-                        showCustomSnackBar("Employee id is still empty!");
-                      } else if (password.isEmpty) {
-                        showCustomSnackBar("Password is still empty!");
-                      } else {
-                        try {
-                          QuerySnapshot snap =
-                              await FirebaseFirestore.instance
-                                  .collection("Employee")
-                                  .where('id', isEqualTo: id)
-                                  .get();
+                              FocusScope.of(context).unfocus();
+                              String id = idController.text.trim();
+                              String password = passController.text.trim();
 
-                          if (snap.docs.isEmpty) {
-                            showCustomSnackBar("Employee id does not exist!");
-                            return;
-                          }
+                              if (id.isEmpty) {
+                                showCustomSnackBar(
+                                  "Employee id is still empty!",
+                                );
+                                setState(() {
+                                  _isLoading = false;
+                                });
+                              } else if (password.isEmpty) {
+                                showCustomSnackBar("Password is still empty!");
+                                setState(() {
+                                  _isLoading = false;
+                                });
+                              } else {
+                                try {
+                                  QuerySnapshot snap =
+                                      await FirebaseFirestore.instance
+                                          .collection("Employee")
+                                          .where('id', isEqualTo: id)
+                                          .get();
 
-                          if (password == snap.docs[0]['password']) {
-                            sharedPreferences =
-                                await SharedPreferences.getInstance();
+                                  if (snap.docs.isEmpty) {
+                                    showCustomSnackBar(
+                                      "Employee id does not exist!",
+                                    );
+                                    setState(() {
+                                      _isLoading = false;
+                                    });
+                                    return;
+                                  }
 
-                            sharedPreferences.setString('employeeId', id);
-                            sharedPreferences.setString(
-                              'userDocId',
-                              snap.docs[0].id,
-                            );
+                                  if (password == snap.docs[0]['password']) {
+                                    sharedPreferences =
+                                        await SharedPreferences.getInstance();
 
-                            User.employeeId = id;
-                            User.id = snap.docs[0].id;
+                                    sharedPreferences.setString(
+                                      'employeeId',
+                                      id,
+                                    );
+                                    sharedPreferences.setString(
+                                      'userDocId',
+                                      snap.docs[0].id,
+                                    );
 
-                            showCustomSnackBar(
-                              "Login successful!",
-                              isError: false,
-                            );
+                                    User.employeeId = id;
+                                    User.id = snap.docs[0].id;
 
-                            await Future.delayed(const Duration(seconds: 1));
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const HomeScreen(),
-                              ),
-                            );
-                          } else {
-                            showCustomSnackBar("Password is not correct!");
-                          }
-                        } catch (e) {
-                          showCustomSnackBar("Error occurred!");
-                        }
-                      }
-                    },
+                                    showCustomSnackBar(
+                                      "Login successful!",
+                                      isError: false,
+                                    );
+
+                                    await Future.delayed(
+                                      const Duration(seconds: 1),
+                                    );
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) => const HomeScreen(),
+                                      ),
+                                    );
+                                  } else {
+                                    showCustomSnackBar(
+                                      "Password is not correct!",
+                                    );
+                                    setState(() {
+                                      _isLoading = false;
+                                    });
+                                  }
+                                } catch (e) {
+                                  showCustomSnackBar("Error occurred!");
+                                  setState(() {
+                                    _isLoading = false;
+                                  });
+                                }
+                              }
+                            },
                     child: Container(
                       height: 55,
                       width: double.infinity,
                       margin: EdgeInsets.only(top: screenHeight / 30),
                       decoration: BoxDecoration(
-                        color: primary,
+                        color: _isLoading ? Colors.grey : primary,
                         borderRadius: BorderRadius.circular(30),
                         boxShadow: [
                           BoxShadow(
@@ -241,17 +278,54 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                       child: Center(
+                        child:
+                            _isLoading
+                                ? CircularProgressIndicator(color: Colors.white)
+                                : Text(
+                                  "LOGIN",
+                                  style: TextStyle(
+                                    fontFamily: "NexaBold",
+                                    fontSize: screenWidth / 25,
+                                    color: Colors.white,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                      ),
+                    ),
+                  ),
+
+                  // Navigation to Register Screen
+                  SizedBox(height: screenHeight * 0.02),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Don't have an account? ",
+                        style: TextStyle(
+                          fontFamily: "NexaLight",
+                          color: Colors.grey.shade600,
+                          fontSize: screenWidth / 30,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const RegisterScreen(),
+                            ),
+                          );
+                        },
                         child: Text(
-                          "LOGIN",
+                          "Register",
                           style: TextStyle(
                             fontFamily: "NexaBold",
-                            fontSize: screenWidth / 25,
-                            color: Colors.white,
-                            letterSpacing: 1.5,
+                            color: primary,
+                            fontSize: screenWidth / 30,
                           ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),

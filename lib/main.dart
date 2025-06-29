@@ -6,14 +6,20 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_localizations/flutter_localizations.dart'; // Add this
-import 'package:month_year_picker/month_year_picker.dart'; // Add this
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:month_year_picker/month_year_picker.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   print("Firebase initialized successfully");
-  runApp(const MyApp());
+
+  runApp(
+    KeyboardVisibilityProvider(
+      // ✅ wrap your app here
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -30,14 +36,13 @@ class MyApp extends StatelessWidget {
         MonthYearPickerLocalizations.delegate,
       ],
       supportedLocales: const [
-        Locale('en', ''), // English, add other locales if needed
+        Locale('en', ''), // English
       ],
-      home: const KeyboardVisibilityProvider(child: AuthCheck()),
+      home: const AuthCheck(), // ✅ no need to wrap here again
     );
   }
 }
 
-// Auto check
 class AuthCheck extends StatefulWidget {
   const AuthCheck({Key? key}) : super(key: key);
 
@@ -54,12 +59,9 @@ class _AuthCheckState extends State<AuthCheck> {
     _checkLogin();
   }
 
-  // Handle Submit
   Future<void> _checkLogin() async {
     final prefs = await SharedPreferences.getInstance();
-    String? employeeId = prefs.getString(
-      'employeeId',
-    ); // Match this key exactly!
+    String? employeeId = prefs.getString('employeeId');
     setState(() {
       userAvailable = employeeId != null;
       if (userAvailable == true) {

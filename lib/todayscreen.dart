@@ -8,7 +8,8 @@ import 'package:geocoding/geocoding.dart';
 import 'package:intl/intl.dart';
 import 'package:slide_to_act/slide_to_act.dart';
 import 'package:location/location.dart';
-import 'package:attendance_app/services/location_service.dart'; // Assuming LocationService is in a separate file
+import 'package:attendance_app/services/location_service.dart';
+import 'dart:math';
 
 class TodayScreen extends StatefulWidget {
   const TodayScreen({Key? key}) : super(key: key);
@@ -40,6 +41,26 @@ class _TodayScreenState extends State<TodayScreen> {
     _getRecord();
     _getOfficeCode();
     _loadTodayRecord();
+  }
+
+  double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+    const double earthRadius = 6371000; // meters
+    double dLat = _degreesToRadians(lat2 - lat1);
+    double dLon = _degreesToRadians(lon2 - lon1);
+
+    double a =
+        (sin(dLat / 2) * sin(dLat / 2)) +
+        cos(_degreesToRadians(lat1)) *
+            cos(_degreesToRadians(lat2)) *
+            (sin(dLon / 2) * sin(dLon / 2));
+
+    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+
+    return earthRadius * c;
+  }
+
+  double _degreesToRadians(double degrees) {
+    return degrees * pi / 180;
   }
 
   // Initialize LocationService
@@ -499,11 +520,15 @@ class _TodayScreenState extends State<TodayScreen> {
                         outerColor: Colors.white,
                         innerColor: primary,
                         onSubmit: () async {
-                          if (!mounted)
-                            return; // Prevent execution if not mounted
+                          if (!mounted) return;
+
+                          // Static office location for NUBB
+                          const double officeLat = 13.1041;
+                          const double officeLong = 103.2022;
 
                           LocationData? locData =
                               await _locationService.getLocation();
+
                           if (locData == null ||
                               locData.latitude == null ||
                               locData.longitude == null) {
@@ -512,7 +537,24 @@ class _TodayScreenState extends State<TodayScreen> {
                             return;
                           }
 
-                          await _getLocation();
+                          // Calculate distance between current location and office
+                          double distance = calculateDistance(
+                            locData.latitude!,
+                            locData.longitude!,
+                            officeLat,
+                            officeLong,
+                          );
+
+                          // Allow a radius of 100 meters
+                          if (distance > 100) {
+                            showCustomSnackBar(
+                              "You are not at the office location.",
+                            );
+                            if (mounted) _slideKey.currentState?.reset();
+                            return;
+                          }
+
+                          await _getLocation(); // This updates checkInLocation with address string
 
                           TimeOfDay now = TimeOfDay.now();
                           bool isLateCheckIn = false;
@@ -570,7 +612,8 @@ class _TodayScreenState extends State<TodayScreen> {
 
                             setState(() {
                               checkIn = newCheckIn;
-                              checkInLocation = checkInLocation;
+                              checkInLocation =
+                                  checkInLocation; // updated by _getLocation()
                             });
 
                             await FirebaseFirestore.instance

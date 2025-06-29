@@ -1,7 +1,9 @@
 import 'package:attendance_app/model/user.dart';
+import 'package:attendance_app/loginscreen.dart'; // make sure this path is correct
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -20,7 +22,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   TextEditingController lastNameController = TextEditingController();
   TextEditingController addressController = TextEditingController();
 
-// GetUser pic
+  // Get user profile pic
   void _getProfilePic() async {
     DocumentSnapshot doc =
         await FirebaseFirestore.instance
@@ -28,7 +30,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             .doc(User.id)
             .get();
 
-    final data = doc.data() as Map<String, dynamic>?; // cast safely
+    final data = doc.data() as Map<String, dynamic>?;
 
     setState(() {
       if (data != null &&
@@ -36,7 +38,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           (data['profilePic'] as String).isNotEmpty) {
         User.profilePicLink = data['profilePic'];
       } else {
-        User.profilePicLink = ""; // no profile pic available
+        User.profilePicLink = "";
       }
     });
   }
@@ -132,9 +134,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         );
                       },
                     ).then((value) {
-                      setState(() {
-                        birth = DateFormat("MM/dd/yyyy").format(value!);
-                      });
+                      if (value != null) {
+                        setState(() {
+                          birth = DateFormat("MM/dd/yyyy").format(value);
+                        });
+                      }
                     });
                   },
                   child: field("Date of Birth", birth),
@@ -143,6 +147,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             User.canEdit
                 ? textField("Address", "Address", addressController)
                 : field("Address", User.address),
+
+            // SAVE Button (Only show when canEdit is true)
             User.canEdit
                 ? GestureDetector(
                   onTap: () async {
@@ -208,6 +214,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 )
                 : const SizedBox(),
+
+            // Logout button - Always visible
+            Container(
+              height: kToolbarHeight,
+              width: screenWidth,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                color: Colors.redAccent,
+              ),
+              child: TextButton(
+                onPressed: () async {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.clear();
+
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoginScreen(),
+                    ),
+                  );
+                },
+                child: const Text(
+                  "LOGOUT",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontFamily: "NexaBold",
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
