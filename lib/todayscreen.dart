@@ -1,7 +1,6 @@
 import 'dart:async';
-
 import 'package:attendance_app/model/user.dart';
-import 'package:attendance_app/services/location_service.dart'; // Assuming LocationService is in a separate file
+import 'package:attendance_app/services/location_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
@@ -11,6 +10,8 @@ import 'package:intl/intl.dart';
 import 'package:location/location.dart';
 import 'package:slide_to_act/slide_to_act.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:geolocator/geolocator.dart' as geo;
+import 'package:location/location.dart';
 
 class TodayScreen extends StatefulWidget {
   const TodayScreen({Key? key}) : super(key: key);
@@ -42,6 +43,22 @@ class _TodayScreenState extends State<TodayScreen> {
     _getRecord();
     _getOfficeCode();
     _loadTodayRecord();
+  }
+
+  // Fetch In NUBB
+  bool isWithinAllowedDistance(double userLat, double userLon) {
+    const double allowedLat = 13.0862629;
+    const double allowedLon = 103.2197316;
+    const double allowedRadiusMeters = 100;
+
+    double distance = geo.Geolocator.distanceBetween(
+      userLat,
+      userLon,
+      allowedLat,
+      allowedLon,
+    );
+
+    return distance <= allowedRadiusMeters;
   }
 
   // Initialize LocationService
@@ -411,6 +428,19 @@ class _TodayScreenState extends State<TodayScreen> {
     }
   }
 
+  // Detect Fake Location
+  Future<bool> isLocationMocked() async {
+    try {
+      geo.Position position = await geo.Geolocator.getCurrentPosition(
+        desiredAccuracy: geo.LocationAccuracy.high,
+      );
+      return position.isMocked;
+    } catch (e) {
+      print('Error checking mock location: $e');
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     screenHeight = MediaQuery.of(context).size.height;
@@ -608,12 +638,33 @@ class _TodayScreenState extends State<TodayScreen> {
                         onSubmit: () async {
                           if (!mounted) return;
 
+                          bool mocked = await isLocationMocked();
+                          if (mocked) {
+                            showCustomSnackBar(
+                              "Fake location detected. Check-in rejected.",
+                            );
+                            if (mounted) _slideKey.currentState?.reset();
+                            return;
+                          }
+
                           LocationData? locData =
                               await _locationService.getLocation();
                           if (locData == null ||
                               locData.latitude == null ||
                               locData.longitude == null) {
                             showCustomSnackBar("Location not available!");
+                            if (mounted) _slideKey.currentState?.reset();
+                            return;
+                          }
+
+                          // New: Check allowed location radius
+                          if (!isWithinAllowedDistance(
+                            locData.latitude!,
+                            locData.longitude!,
+                          )) {
+                            showCustomSnackBar(
+                              "You are not at the allowed location to check-in.",
+                            );
                             if (mounted) _slideKey.currentState?.reset();
                             return;
                           }
