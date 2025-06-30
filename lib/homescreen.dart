@@ -7,6 +7,7 @@ import 'package:attendance_app/todayscreen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -19,12 +20,13 @@ class _HomeScreenState extends State<HomeScreen> {
   double screenHeight = 0;
   double screenWidth = 0;
 
-  Color primary = const Color(0xffeef444c);
+  Color primary = const Color(0xFFE53935);
 
   int currentIndex = 1;
+  int _selectedIndex = 1;
 
   List<IconData> navigationIcons = [
-    FontAwesomeIcons.calendarAlt,
+    FontAwesomeIcons.calendarDays,
     FontAwesomeIcons.check,
     FontAwesomeIcons.paperPlane,
     FontAwesomeIcons.user,
@@ -143,74 +145,43 @@ class _HomeScreenState extends State<HomeScreen> {
       body: IndexedStack(
         index: currentIndex,
         children: [
-          new CalendarScreen(),
-          new TodayScreen(),
-          new AbsentRequestScreen(),
-          new ProfileScreen(),
+          CalendarScreen(),
+          TodayScreen(),
+          AbsentRequestScreen(),
+          ProfileScreen(),
         ],
       ),
+
       bottomNavigationBar: Container(
-        height: 70,
-        margin: const EdgeInsets.only(left: 12, right: 12, bottom: 24),
-        decoration: const BoxDecoration(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.all(Radius.circular(40)),
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: primary, width: 2),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 10,
-              offset: Offset(2, 2),
-            ),
+            BoxShadow(blurRadius: 20, color: Colors.black.withOpacity(0.1)),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.all(Radius.circular(40)),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              for (int i = 0; i < navigationIcons.length; i++) ...<Expanded>{
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        currentIndex = i;
-                      });
-                    },
-                    child: Container(
-                      height: screenHeight,
-                      width: screenWidth,
-                      color: Colors.white,
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              navigationIcons[i],
-                              color:
-                                  i == currentIndex ? primary : Colors.black54,
-                              size: i == currentIndex ? 30 : 26,
-                            ),
-                            i == currentIndex
-                                ? Container(
-                                  margin: const EdgeInsets.only(top: 6),
-                                  height: 3,
-                                  width: 22,
-                                  decoration: BoxDecoration(
-                                    borderRadius: const BorderRadius.all(
-                                      Radius.circular(40),
-                                    ),
-                                    color: primary,
-                                  ),
-                                )
-                                : const SizedBox(),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10),
+          child: GNav(
+            gap: 8,
+            selectedIndex: _selectedIndex,
+            onTabChange: (index) {
+              setState(() {
+                _selectedIndex = index;
+                currentIndex = index;
+              });
+            },
+            color: Colors.grey[600],
+            activeColor: primary,
+            tabBackgroundColor: primary.withOpacity(0.15),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            tabs: const [
+              GButton(icon: FontAwesomeIcons.calendarDays, text: 'Report'),
+              GButton(icon: FontAwesomeIcons.check, text: 'Check-In'),
+              GButton(icon: FontAwesomeIcons.paperPlane, text: 'Request'),
+              GButton(icon: FontAwesomeIcons.user, text: 'Profile'),
             ],
           ),
         ),

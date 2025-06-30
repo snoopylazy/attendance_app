@@ -15,7 +15,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   double screenHeight = 0;
   double screenWidth = 0;
 
-  Color primary = const Color(0xffeef444c);
+  Color primary = const Color(0xFFE53935);
 
   String _month = DateFormat('MMMM').format(DateTime.now());
 
@@ -25,7 +25,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
     screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
@@ -36,11 +35,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 "My Attendance",
                 style: TextStyle(
                   fontFamily: "NexaBold",
-                  fontSize: screenWidth / 16,
+                  fontSize: screenWidth / 22,
                   color: Colors.grey[800],
                   letterSpacing: 1.2,
                 ),
               ),
+
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -49,7 +49,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     _month ?? "Select Month",
                     style: TextStyle(
                       fontFamily: "NexaBold",
-                      fontSize: screenWidth / 16,
+                      fontSize: screenWidth / 22,
                       color: Colors.grey[900],
                     ),
                   ),
@@ -94,18 +94,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
+                        horizontal: 12,
+                        vertical: 8,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(30),
+                        borderRadius: BorderRadius.circular(24),
                         border: Border.all(color: Colors.grey.shade300),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black12,
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
+                            blurRadius: 6,
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
@@ -115,21 +115,21 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           Icon(
                             Icons.calendar_month,
                             color: Colors.grey[700],
-                            size: screenWidth / 20,
+                            size: screenWidth / 26,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           Text(
                             _month ?? "Pick a Month",
                             style: TextStyle(
                               fontFamily: "NexaBold",
-                              fontSize: screenWidth / 20,
+                              fontSize: screenWidth / 26,
                               color: Colors.grey[800],
                             ),
                           ),
                           Icon(
                             Icons.arrow_drop_down,
                             color: Colors.grey[700],
-                            size: screenWidth / 20,
+                            size: screenWidth / 26,
                           ),
                         ],
                       ),
@@ -137,6 +137,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   ),
                 ],
               ),
+
               const SizedBox(height: 24),
               SizedBox(
                 height: screenHeight / 1.45,
@@ -187,24 +188,33 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         final record = filteredRecords[index];
                         final recordDate = record['date'].toDate();
 
+                        final cardHeight = (screenHeight * 0.20).clamp(
+                          120.0,
+                          150.0,
+                        );
+
                         return Container(
-                          height: 150,
-                          margin: const EdgeInsets.symmetric(horizontal: 6),
+                          height: cardHeight,
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(24),
+                            borderRadius: BorderRadius.circular(28),
                             gradient: LinearGradient(
                               colors: [
-                                primary.withOpacity(0.85),
-                                primary.withOpacity(0.65),
+                                Colors.red.shade400,
+                                Colors.red.shade600,
+                                Colors.red.shade800,
                               ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: primary.withOpacity(0.3),
-                                blurRadius: 12,
-                                offset: const Offset(3, 6),
+                                color: Colors.redAccent.withOpacity(0.4),
+                                blurRadius: 14,
+                                offset: const Offset(4, 8),
                               ),
                             ],
                           ),
@@ -215,8 +225,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                 decoration: BoxDecoration(
                                   color: Colors.white.withOpacity(0.2),
                                   borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(24),
-                                    bottomLeft: Radius.circular(24),
+                                    topLeft: Radius.circular(28),
+                                    bottomLeft: Radius.circular(28),
                                   ),
                                 ),
                                 child: Center(
@@ -225,7 +235,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontFamily: "NexaBold",
-                                      fontSize: screenWidth / 18,
+                                      fontSize: screenWidth / 20,
                                       color: Colors.white,
                                       height: 1.2,
                                     ),
@@ -235,18 +245,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               Expanded(
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                  ),
+                                    horizontal: 12,
+                                  ), // less padding
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                        CrossAxisAlignment.center,
                                     children: [
                                       Text(
                                         "Check In",
                                         style: TextStyle(
                                           fontFamily: "NexaRegular",
-                                          fontSize: screenWidth / 24,
+                                          fontSize: screenWidth / 28,
                                           color: Colors.white70,
                                         ),
                                       ),
@@ -255,7 +265,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                         record['checkIn'],
                                         style: TextStyle(
                                           fontFamily: "NexaBold",
-                                          fontSize: screenWidth / 18,
+                                          fontSize: screenWidth / 20,
                                           color: Colors.white,
                                         ),
                                       ),
@@ -266,18 +276,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               Expanded(
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
+                                    horizontal: 12,
                                   ),
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                        CrossAxisAlignment.center,
                                     children: [
                                       Text(
                                         "Check Out",
                                         style: TextStyle(
                                           fontFamily: "NexaRegular",
-                                          fontSize: screenWidth / 24,
+                                          fontSize: screenWidth / 28,
                                           color: Colors.white70,
                                         ),
                                       ),
@@ -286,7 +296,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                         record['checkOut'],
                                         style: TextStyle(
                                           fontFamily: "NexaBold",
-                                          fontSize: screenWidth / 18,
+                                          fontSize: screenWidth / 20,
                                           color: Colors.white,
                                         ),
                                       ),

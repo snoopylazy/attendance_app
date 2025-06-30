@@ -25,7 +25,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   double screenHeight = 0;
   double screenWidth = 0;
-  Color primary = const Color(0xffeef444c);
+  Color primary = const Color(0xFFE53935);
 
   Future<void> _pickBirthDate() async {
     DateTime? picked = await showDatePicker(
@@ -126,10 +126,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Widget fieldTitle(String title) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Text(
-        title,
-        style: TextStyle(fontSize: screenWidth / 26, fontFamily: "NexaRegular"),
+      margin: const EdgeInsets.only(bottom: 8),
+      child: RichText(
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: title,
+              style: TextStyle(
+                fontSize: screenWidth / 30,
+                fontFamily: "NexaRegular",
+                color: Colors.black,
+              ),
+            ),
+            TextSpan(
+              text: " *",
+              style: TextStyle(
+                fontSize: screenWidth / 30,
+                fontFamily: "NexaRegular",
+                color: Colors.red,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -142,23 +160,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
   ) {
     return Container(
       width: screenWidth,
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.all(Radius.circular(12)),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 10,
-            offset: Offset(2, 2),
-          ),
+          BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(2, 2)),
         ],
       ),
       child: Row(
         children: [
           Container(
-            width: screenWidth / 6,
-            child: Icon(icon, color: primary, size: screenWidth / 15),
+            width: screenWidth / 7, // slightly smaller icon space
+            child: Icon(icon, color: primary, size: screenWidth / 18),
           ),
           Expanded(
             child: Padding(
@@ -166,9 +180,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: TextFormField(
                 controller: controller,
                 obscureText: isPassword,
+                style: TextStyle(fontSize: screenWidth / 32),
                 decoration: InputDecoration(
                   contentPadding: EdgeInsets.symmetric(
-                    vertical: screenHeight / 35,
+                    vertical: screenHeight / 50, // reduced padding
                   ),
                   border: InputBorder.none,
                   hintText: hint,
@@ -192,7 +207,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            height: screenHeight / 2.8,
+            height: screenHeight / 3.5, // reduced from /2.8
             width: screenWidth,
             decoration: BoxDecoration(
               color: primary,
@@ -210,21 +225,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           Padding(
             padding: EdgeInsets.only(
-              top: screenHeight / 20,
-              left: screenWidth / 12,
+              top: screenHeight / 30, // smaller
+              left: screenWidth / 15,
             ),
             child: Text(
               "Create Account",
               style: TextStyle(
-                fontSize: screenWidth / 14,
+                fontSize: screenWidth / 18, // smaller text
                 fontFamily: "NexaBold",
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Expanded(
             child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: screenWidth / 12),
+              padding: EdgeInsets.symmetric(horizontal: screenWidth / 15),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -276,17 +291,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(
-                          vertical: 16,
+                          vertical: 14,
                           horizontal: 12,
                         ),
-                        margin: const EdgeInsets.only(bottom: 12),
+                        margin: const EdgeInsets.only(bottom: 10),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: const [
                             BoxShadow(
                               color: Colors.black26,
-                              blurRadius: 10,
+                              blurRadius: 8,
                               offset: Offset(2, 2),
                             ),
                           ],
@@ -303,9 +318,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     GestureDetector(
                       onTap: _isLoading ? null : _register,
                       child: Container(
-                        height: 55,
+                        height: 45, // reduced
                         width: double.infinity,
-                        margin: EdgeInsets.only(top: screenHeight / 30),
+                        margin: EdgeInsets.only(top: screenHeight / 40),
                         decoration: BoxDecoration(
                           color: _isLoading ? Colors.grey : primary,
                           borderRadius: BorderRadius.circular(30),
@@ -321,22 +336,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           child:
                               _isLoading
                                   ? const CircularProgressIndicator(
-                                    color: Colors.white,
+                                    color: Colors.red,
                                   )
                                   : Text(
                                     "REGISTER",
                                     style: TextStyle(
                                       fontFamily: "NexaBold",
-                                      fontSize: screenWidth / 25,
+                                      fontSize: screenWidth / 28,
                                       color: Colors.white,
-                                      letterSpacing: 1.5,
+                                      letterSpacing: 1.2,
                                     ),
                                   ),
                         ),
                       ),
                     ),
 
-                    SizedBox(height: screenHeight * 0.02),
+                    SizedBox(height: screenHeight * 0.015),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -345,24 +360,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           style: TextStyle(
                             fontFamily: "NexaLight",
                             color: Colors.grey.shade600,
-                            fontSize: screenWidth / 30,
+                            fontSize: screenWidth / 32,
                           ),
                         ),
                         GestureDetector(
-                          onTap: () {
-                            Navigator.pop(context);
-                          },
+                          onTap: () => Navigator.pop(context),
                           child: Text(
                             "Login",
                             style: TextStyle(
                               fontFamily: "NexaBold",
                               color: primary,
-                              fontSize: screenWidth / 30,
+                              fontSize: screenWidth / 32,
                             ),
                           ),
                         ),
                       ],
                     ),
+                    SizedBox(height: screenHeight * 0.015),
                   ],
                 ),
               ),

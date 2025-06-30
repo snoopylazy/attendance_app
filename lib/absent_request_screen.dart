@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+// import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../model/user.dart';
 
 class AbsentRequestScreen extends StatefulWidget {
@@ -10,9 +10,7 @@ class AbsentRequestScreen extends StatefulWidget {
 }
 
 class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
-  final Color primary = const Color(
-    0xffef444c,
-  ); // Match HomeScreen primary color
+  final Color primary = const Color(0xFFE53935);
 
   TextEditingController _reasonController = TextEditingController();
 
@@ -23,6 +21,7 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
 
   bool get isAdmin => User.employeeId == 'A123456' || User.lastName == 'Monthy';
 
+  // Handle Submit
   Future<void> _submitRequest() async {
     if (_fromDate == null || _toDate == null || _reasonController.text.isEmpty)
       return;
@@ -37,9 +36,12 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
       'timestamp': Timestamp.now(),
     });
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text("Request submitted successfully")));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Request submitted successfully"),
+        backgroundColor: Colors.green,
+      ),
+    );
 
     _reasonController.clear();
     setState(() {
@@ -48,17 +50,24 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
     });
   }
 
+  // approval
   void _approveRejectRequest(String docId, String status) async {
     await FirebaseFirestore.instance
         .collection('requestabsent')
         .doc(docId)
         .update({'status': status});
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("successfully"), backgroundColor: Colors.green),
+    );
   }
 
+  // Handle Edit
   void _showEditDialog(QueryDocumentSnapshot data) {
     final TextEditingController editReasonController = TextEditingController(
       text: data['reason'],
     );
+
     DateTime editFromDate = DateTime.parse(data['fromDate']);
     DateTime editToDate = DateTime.parse(data['toDate']);
 
@@ -66,15 +75,29 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text("Edit Absence Request"),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            "Edit Absence Request",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
           content: StatefulBuilder(
             builder: (context, setStateDialog) {
               return SingleChildScrollView(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text("From Date:"),
-                    TextButton(
+                    const Text(
+                      "📅 From Date:",
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 4),
+                    TextButton.icon(
                       onPressed: () async {
                         DateTime? picked = await showDatePicker(
                           context: context,
@@ -91,11 +114,17 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
                           });
                         }
                       },
-                      child: Text(DateFormat.yMMMd().format(editFromDate)),
+                      icon: const Icon(Icons.calendar_today, size: 18),
+                      label: Text(DateFormat.yMMMd().format(editFromDate)),
                     ),
-                    const SizedBox(height: 8),
-                    const Text("To Date:"),
-                    TextButton(
+
+                    const SizedBox(height: 12),
+                    const Text(
+                      "📅 To Date:",
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 4),
+                    TextButton.icon(
                       onPressed: () async {
                         DateTime? picked = await showDatePicker(
                           context: context,
@@ -109,13 +138,29 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
                           });
                         }
                       },
-                      child: Text(DateFormat.yMMMd().format(editToDate)),
+                      icon: const Icon(Icons.calendar_today, size: 18),
+                      label: Text(DateFormat.yMMMd().format(editToDate)),
                     ),
-                    const SizedBox(height: 12),
+
+                    const SizedBox(height: 16),
+                    const Text(
+                      "📝 Reason:",
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6),
                     TextField(
                       controller: editReasonController,
                       maxLines: 3,
-                      decoration: const InputDecoration(labelText: "Reason"),
+                      decoration: InputDecoration(
+                        hintText: "Enter reason for absence",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: primary, width: 1.5),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -125,11 +170,15 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
+              child: const Text(
+                "Cancel",
+                style: TextStyle(color: Colors.black87),
+              ),
             ),
-            ElevatedButton(
+            ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: primary,
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
@@ -145,10 +194,14 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
                     });
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Request updated")),
+                  const SnackBar(
+                    content: Text("Request updated"),
+                    backgroundColor: Colors.green,
+                  ),
                 );
               },
-              child: const Text("Save"),
+              icon: const Icon(Icons.save),
+              label: const Text("Save"),
             ),
           ],
         );
@@ -156,24 +209,42 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
     );
   }
 
+  // Handle delete
   void _deleteRequest(String docId) async {
     bool? confirm = await showDialog<bool>(
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text("Confirm Delete"),
+            title: const Text(
+              "Confirm Delete",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             content: const Text(
-              "Are you sure you want to delete this request?",
+              "Are you sure you want to delete this request? This action cannot be undone.",
+            ),
+            actionsPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text("Cancel"),
+                child: const Text(
+                  "Cancel",
+                  style: TextStyle(color: Colors.black87),
+                ),
               ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: primary),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red.shade600,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text("Delete"),
+                icon: const Icon(Icons.delete),
+                label: const Text("Delete"),
               ),
             ],
           ),
@@ -184,351 +255,526 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
           .collection('requestabsent')
           .doc(docId)
           .delete();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Request deleted")));
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Request deleted"),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
     }
   }
 
+  // Status
   Widget _buildStatusBadge(String status) {
     Color color;
+    IconData icon;
+
     switch (status) {
       case 'Approved':
         color = Colors.green;
+        icon = Icons.check_circle;
         break;
       case 'Rejected':
         color = Colors.red;
+        icon = Icons.cancel;
         break;
       default:
         color = primary;
+        icon = Icons.hourglass_top;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color, width: 1.2),
+        borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(
-        status,
-        style: TextStyle(color: color, fontWeight: FontWeight.bold),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
+          Text(
+            status,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Absent Request"),
-        backgroundColor: primary,
-        foregroundColor: Colors.white,
-        centerTitle: true,
-        elevation: 4,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
-        ),
+    return Theme(
+      data: Theme.of(context).copyWith(
+        textTheme: Theme.of(context).textTheme.apply(fontFamily: "NexaRegular"),
       ),
-      body: Column(
-        children: [
-          if (!isAdmin) ...[
-            Container(
-              margin: const EdgeInsets.all(12),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 8,
-                    offset: Offset(2, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Date pickers
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text("From Date:"),
-                          TextButton(
-                            onPressed: () async {
-                              DateTime? picked = await showDatePicker(
-                                context: context,
-                                initialDate: _fromDate ?? DateTime.now(),
-                                firstDate: DateTime(2023),
-                                lastDate: DateTime(2100),
-                              );
-                              if (picked != null) {
-                                setState(() {
-                                  _fromDate = picked;
-                                  if (_toDate != null &&
-                                      _toDate!.isBefore(_fromDate!)) {
-                                    _toDate = null;
-                                  }
-                                });
-                              }
-                            },
-                            child: Text(
-                              _fromDate != null
-                                  ? DateFormat.yMMMd().format(_fromDate!)
-                                  : "Select",
-                              style: const TextStyle(fontSize: 16),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Absent Request"),
+          backgroundColor: primary,
+          foregroundColor: Colors.white,
+          centerTitle: true,
+          elevation: 4,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+          ),
+        ),
+        body: Column(
+          children: [
+            if (!isAdmin) ...[
+              Container(
+                margin: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 8,
+                      offset: Offset(2, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Date pickers row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "From Date:",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                                fontSize: 14,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text("To Date:"),
-                          TextButton(
-                            onPressed: () async {
-                              DateTime? picked = await showDatePicker(
-                                context: context,
-                                initialDate:
-                                    _toDate ?? (_fromDate ?? DateTime.now()),
-                                firstDate: _fromDate ?? DateTime(2023),
-                                lastDate: DateTime(2100),
-                              );
-                              if (picked != null) {
-                                setState(() => _toDate = picked);
-                              }
-                            },
-                            child: Text(
-                              _toDate != null
-                                  ? DateFormat.yMMMd().format(_toDate!)
-                                  : "Select",
-                              style: const TextStyle(fontSize: 16),
+                            TextButton(
+                              onPressed: () async {
+                                DateTime? picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: _fromDate ?? DateTime.now(),
+                                  firstDate: DateTime(2023),
+                                  lastDate: DateTime(2100),
+                                );
+                                if (picked != null) {
+                                  setState(() {
+                                    _fromDate = picked;
+                                    if (_toDate != null &&
+                                        _toDate!.isBefore(_fromDate!)) {
+                                      _toDate = null;
+                                    }
+                                  });
+                                }
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red[600],
+                                textStyle: const TextStyle(fontSize: 16),
+                              ),
+                              child: Text(
+                                _fromDate != null
+                                    ? DateFormat.yMMMd().format(_fromDate!)
+                                    : "Select",
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "To Date:",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                                fontSize: 14,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () async {
+                                DateTime? picked = await showDatePicker(
+                                  context: context,
+                                  initialDate:
+                                      _toDate ?? (_fromDate ?? DateTime.now()),
+                                  firstDate: _fromDate ?? DateTime(2023),
+                                  lastDate: DateTime(2100),
+                                );
+                                if (picked != null) {
+                                  setState(() => _toDate = picked);
+                                }
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red[600],
+                                textStyle: const TextStyle(fontSize: 16),
+                              ),
+                              child: Text(
+                                _toDate != null
+                                    ? DateFormat.yMMMd().format(_toDate!)
+                                    : "Select",
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Reason TextField
+                    TextField(
+                      controller: _reasonController,
+                      maxLines: 3,
+                      style: const TextStyle(
+                        color: Colors.black87,
+                        fontSize: 16,
                       ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Reason text field
-                  TextField(
-                    controller: _reasonController,
-                    maxLines: 3,
-                    decoration: InputDecoration(
-                      labelText: "Reason",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      decoration: InputDecoration(
+                        labelText: "Reason",
+                        labelStyle: TextStyle(
+                          color: Colors.red[600],
+                          fontWeight: FontWeight.w600,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.red[600]!),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.red[300]!),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
-                  ),
 
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // Submit button
-                  Center(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primary,
+                    // Submit Button
+                    Center(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red[600],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          elevation: 5,
+                        ),
+                        onPressed: _submitRequest,
+                        icon: const Icon(Icons.send, color: Colors.white),
+                        label: const Text(
+                          "Submit Request",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            // Filter chips
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 10,
+                children:
+                    RequestStatus.values.map((status) {
+                      final label =
+                          status.name[0].toUpperCase() +
+                          status.name.substring(1);
+                      final isSelected = selectedStatus == status;
+
+                      return ChoiceChip(
+                        label: Text(
+                          label,
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Colors.black87,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        selected: isSelected,
+                        selectedColor: Colors.red[600],
+                        backgroundColor: Colors.white,
+                        elevation: isSelected ? 4 : 1,
+                        pressElevation: 6,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                          side: BorderSide(
+                            color:
+                                isSelected
+                                    ? Colors.red[600]!
+                                    : Colors.grey[300]!,
+                            width: 1.4,
+                          ),
+                          borderRadius: BorderRadius.circular(24),
                         ),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
+                          horizontal: 16,
+                          vertical: 10,
                         ),
+                        onSelected:
+                            (_) => setState(() => selectedStatus = status),
+                      );
+                    }).toList(),
+              ),
+            ),
+
+            // Expanded List of requests
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream:
+                    FirebaseFirestore.instance
+                        .collection('requestabsent')
+                        .orderBy('timestamp', descending: true)
+                        .snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  final allRequests = snapshot.data!.docs;
+
+                  final requests =
+                      allRequests.where((doc) {
+                        final bool matchesStatus =
+                            selectedStatus == RequestStatus.all
+                                ? true
+                                : doc['status'].toString().toLowerCase() ==
+                                    selectedStatus.name.toLowerCase();
+
+                        final bool canView =
+                            isAdmin
+                                ? true
+                                : doc['employeeId'] == User.employeeId;
+
+                        return matchesStatus && canView;
+                      }).toList();
+
+                  if (requests.isEmpty) {
+                    return Center(
+                      child: Text(
+                        "No requests found.",
+                        style: TextStyle(color: Colors.black54, fontSize: 16),
                       ),
-                      onPressed: _submitRequest,
-                      icon: const Icon(Icons.send),
-                      label: const Text("Submit Request"),
-                    ),
-                  ),
-                ],
+                    );
+                  }
+
+                  return ListView.builder(
+                    itemCount: requests.length,
+                    itemBuilder: (context, index) {
+                      final data = requests[index];
+
+                      final bool canEditOrDelete =
+                          !isAdmin &&
+                          data['employeeId'] == User.employeeId &&
+                          data['status'] == 'Pending';
+
+                      return Card(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        elevation: 4,
+                        color: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: BorderSide(
+                            color: Colors.red.shade100,
+                            width: 1.2,
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Header with icon and name
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.person,
+                                    size: 22,
+                                    color: Colors.black87,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      data['name'],
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  _buildStatusBadge(data['status']),
+                                ],
+                              ),
+
+                              const SizedBox(height: 12),
+
+                              // Date Info
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.date_range,
+                                    size: 20,
+                                    color: Colors.black54,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      "From: ${DateFormat.yMMMd().format(DateTime.parse(data['fromDate']))} → "
+                                      "To: ${DateFormat.yMMMd().format(DateTime.parse(data['toDate']))}",
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 6),
+
+                              // Reason
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.edit_note_rounded,
+                                    size: 20,
+                                    color: Colors.black54,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      "Reason: ${data['reason']}",
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 12),
+
+                              // Admin Approve/Reject Buttons
+                              if (isAdmin && data['status'] == 'Pending') ...[
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.green[600],
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            30,
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed:
+                                          () => _approveRejectRequest(
+                                            data.id,
+                                            'Approved',
+                                          ),
+                                      icon: const Icon(Icons.check),
+                                      label: const Text("Approve"),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red[600],
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            30,
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed:
+                                          () => _approveRejectRequest(
+                                            data.id,
+                                            'Rejected',
+                                          ),
+                                      icon: const Icon(Icons.close),
+                                      label: const Text("Reject"),
+                                    ),
+                                  ],
+                                ),
+                              ],
+
+                              // User Edit/Delete Buttons
+                              if (canEditOrDelete) ...[
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.orange[600],
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            30,
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed: () => _showEditDialog(data),
+                                      icon: const Icon(Icons.edit),
+                                      label: const Text("Edit"),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.grey[700],
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            30,
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed: () => _deleteRequest(data.id),
+                                      icon: const Icon(Icons.delete),
+                                      label: const Text("Delete"),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
             ),
           ],
-
-          // Filter chips
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Wrap(
-              spacing: 10,
-              children:
-                  RequestStatus.values.map((status) {
-                    final label =
-                        status.name[0].toUpperCase() + status.name.substring(1);
-                    return ChoiceChip(
-                      label: Text(label),
-                      selected: selectedStatus == status,
-                      selectedColor: primary.withOpacity(0.2),
-                      labelStyle: TextStyle(
-                        color:
-                            selectedStatus == status ? primary : Colors.black87,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      onSelected:
-                          (_) => setState(() => selectedStatus = status),
-                    );
-                  }).toList(),
-            ),
-          ),
-
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream:
-                  FirebaseFirestore.instance
-                      .collection('requestabsent')
-                      .orderBy('timestamp', descending: true)
-                      .snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData)
-                  return const Center(child: CircularProgressIndicator());
-
-                final allRequests = snapshot.data!.docs;
-
-                final requests =
-                    allRequests.where((doc) {
-                      if (selectedStatus == RequestStatus.all) return true;
-                      return doc['status'].toString().toLowerCase() ==
-                          selectedStatus.name.toLowerCase();
-                    }).toList();
-
-                return ListView.builder(
-                  itemCount: requests.length,
-                  itemBuilder: (context, index) {
-                    final data = requests[index];
-
-                    final bool canEditOrDelete =
-                        !isAdmin &&
-                        data['employeeId'] == User.employeeId &&
-                        data['status'] == 'Pending';
-
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      elevation: 5,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.person,
-                                  size: 20,
-                                  color: Colors.black87,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  data['name'],
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                const Spacer(),
-                                _buildStatusBadge(data['status']),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "📅 From: ${DateFormat.yMMMd().format(DateTime.parse(data['fromDate']))} "
-                              "- To: ${DateFormat.yMMMd().format(DateTime.parse(data['toDate']))}",
-                            ),
-                            Text("📝 Reason: ${data['reason']}"),
-
-                            if (isAdmin && data['status'] == 'Pending') ...[
-                              const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.green,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(30),
-                                      ),
-                                    ),
-                                    onPressed:
-                                        () => _approveRejectRequest(
-                                          data.id,
-                                          'Approved',
-                                        ),
-                                    icon: const Icon(Icons.check),
-                                    label: const Text("Approve"),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(30),
-                                      ),
-                                    ),
-                                    onPressed:
-                                        () => _approveRejectRequest(
-                                          data.id,
-                                          'Rejected',
-                                        ),
-                                    icon: const Icon(Icons.close),
-                                    label: const Text("Reject"),
-                                  ),
-                                ],
-                              ),
-                            ],
-
-                            if (canEditOrDelete) ...[
-                              const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.orange,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(30),
-                                      ),
-                                    ),
-                                    onPressed: () => _showEditDialog(data),
-                                    icon: const Icon(Icons.edit),
-                                    label: const Text("Edit"),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.grey,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(30),
-                                      ),
-                                    ),
-                                    onPressed: () => _deleteRequest(data.id),
-                                    icon: const Icon(Icons.delete),
-                                    label: const Text("Delete"),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

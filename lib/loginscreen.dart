@@ -24,7 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
   double screenHeight = 0;
   double screenWidth = 0;
 
-  Color primary = const Color(0xffeef444c);
+  Color primary = const Color(0xFFE53935);
 
   late SharedPreferences sharedPreferences;
 
@@ -53,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  // Method to show custom SnackBar (KEEP ONLY ONE VERSION)
+  // Method to show custom SnackBar
   void showCustomSnackBar(String message, {bool isError = true}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -106,9 +106,9 @@ class _LoginScreenState extends State<LoginScreen> {
         children: [
           // Header
           isKeyboardVisible
-              ? SizedBox(height: screenHeight / 16)
+              ? SizedBox(height: screenHeight / 20)
               : Container(
-                height: screenHeight / 2.8,
+                height: screenHeight / 3.5, // Reduced height
                 width: screenWidth,
                 decoration: BoxDecoration(
                   color: primary,
@@ -128,31 +128,30 @@ class _LoginScreenState extends State<LoginScreen> {
           // Title
           Padding(
             padding: EdgeInsets.only(
-              top: screenHeight / 20,
-              left: screenWidth / 12,
+              top: screenHeight / 30, // Reduced top padding
+              left: screenWidth / 15,
             ),
             child: Text(
               "Welcome Back!",
               style: TextStyle(
-                fontSize: screenWidth / 14,
+                fontSize: screenWidth / 18, // Smaller font
                 fontFamily: "NexaBold",
               ),
             ),
           ),
 
-          const SizedBox(height: 10),
-
+          const SizedBox(height: 8), // Reduced spacing
           // Login Form
           Expanded(
             child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: screenWidth / 12),
+              padding: EdgeInsets.symmetric(horizontal: screenWidth / 15),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   fieldTitle("Employee ID"),
                   customField("Enter your employee id", idController, false),
 
-                  SizedBox(height: screenHeight * 0.03),
+                  SizedBox(height: screenHeight * 0.015), // Reduced spacing
 
                   fieldTitle("Password"),
                   customField("Enter your password", passController, true),
@@ -166,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: TextStyle(
                           fontFamily: "NexaLight",
                           color: Colors.grey.shade600,
-                          fontSize: screenWidth / 30,
+                          fontSize: screenWidth / 32, // Slightly smaller
                         ),
                       ),
                     ),
@@ -189,14 +188,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 showCustomSnackBar(
                                   "Employee id is still empty!",
                                 );
-                                setState(() {
-                                  _isLoading = false;
-                                });
+                                setState(() => _isLoading = false);
                               } else if (password.isEmpty) {
                                 showCustomSnackBar("Password is still empty!");
-                                setState(() {
-                                  _isLoading = false;
-                                });
+                                setState(() => _isLoading = false);
                               } else {
                                 try {
                                   QuerySnapshot snap =
@@ -209,16 +204,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                     showCustomSnackBar(
                                       "Employee id does not exist!",
                                     );
-                                    setState(() {
-                                      _isLoading = false;
-                                    });
+                                    setState(() => _isLoading = false);
                                     return;
                                   }
 
                                   if (password == snap.docs[0]['password']) {
                                     sharedPreferences =
                                         await SharedPreferences.getInstance();
-
                                     sharedPreferences.setString(
                                       'employeeId',
                                       id,
@@ -235,10 +227,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                       "Login successful!",
                                       isError: false,
                                     );
+                                    await Future.delayed(Duration(seconds: 1));
 
-                                    await Future.delayed(
-                                      const Duration(seconds: 1),
-                                    );
                                     Navigator.pushReplacement(
                                       context,
                                       MaterialPageRoute(
@@ -250,22 +240,18 @@ class _LoginScreenState extends State<LoginScreen> {
                                     showCustomSnackBar(
                                       "Password is not correct!",
                                     );
-                                    setState(() {
-                                      _isLoading = false;
-                                    });
+                                    setState(() => _isLoading = false);
                                   }
                                 } catch (e) {
                                   showCustomSnackBar("Error occurred!");
-                                  setState(() {
-                                    _isLoading = false;
-                                  });
+                                  setState(() => _isLoading = false);
                                 }
                               }
                             },
                     child: Container(
-                      height: 55,
+                      height: 45, // Smaller button
                       width: double.infinity,
-                      margin: EdgeInsets.only(top: screenHeight / 30),
+                      margin: EdgeInsets.only(top: screenHeight / 40),
                       decoration: BoxDecoration(
                         color: _isLoading ? Colors.grey : primary,
                         borderRadius: BorderRadius.circular(30),
@@ -280,12 +266,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Center(
                         child:
                             _isLoading
-                                ? CircularProgressIndicator(color: Colors.white)
+                                ? CircularProgressIndicator(color: primary)
                                 : Text(
                                   "LOGIN",
                                   style: TextStyle(
                                     fontFamily: "NexaBold",
-                                    fontSize: screenWidth / 25,
+                                    fontSize: screenWidth / 28,
                                     color: Colors.white,
                                     letterSpacing: 1.5,
                                   ),
@@ -294,8 +280,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
 
-                  // Navigation to Register Screen
-                  SizedBox(height: screenHeight * 0.02),
+                  SizedBox(height: screenHeight * 0.015), // Less space
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -304,7 +290,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: TextStyle(
                           fontFamily: "NexaLight",
                           color: Colors.grey.shade600,
-                          fontSize: screenWidth / 30,
+                          fontSize: screenWidth / 32,
                         ),
                       ),
                       GestureDetector(
@@ -321,7 +307,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(
                             fontFamily: "NexaBold",
                             color: primary,
-                            fontSize: screenWidth / 30,
+                            fontSize: screenWidth / 32,
                           ),
                         ),
                       ),
@@ -339,15 +325,33 @@ class _LoginScreenState extends State<LoginScreen> {
   // Label
   Widget fieldTitle(String title) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Text(
-        title,
-        style: TextStyle(fontSize: screenWidth / 26, fontFamily: "NexaBold"),
+      margin: const EdgeInsets.only(bottom: 8),
+      child: RichText(
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: title,
+              style: TextStyle(
+                fontSize: screenWidth / 30,
+                fontFamily: "NexaBold",
+                color: Colors.black,
+              ),
+            ),
+            TextSpan(
+              text: " *",
+              style: TextStyle(
+                fontSize: screenWidth / 30,
+                fontFamily: "NexaBold",
+                color: Colors.red,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  // Input Form
+  // Input
   Widget customField(
     String hint,
     TextEditingController controller,
@@ -355,31 +359,24 @@ class _LoginScreenState extends State<LoginScreen> {
   ) {
     return Container(
       width: screenWidth,
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.all(Radius.circular(12)),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 10,
-            offset: Offset(2, 2),
-          ),
+          BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(2, 2)),
         ],
       ),
       child: Row(
         children: [
-          // Left-side icon
           Container(
-            width: screenWidth / 6,
+            width: screenWidth / 7,
             child: Icon(
               isPassword ? Icons.lock : Icons.person,
               color: primary,
-              size: screenWidth / 15,
+              size: screenWidth / 18,
             ),
           ),
-
-          // TextField + optional eye icon
           Expanded(
             child: Padding(
               padding: EdgeInsets.only(right: screenWidth / 30),
@@ -389,9 +386,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 enableSuggestions: false,
                 autocorrect: false,
                 maxLines: 1,
+                style: TextStyle(fontSize: screenWidth / 32),
                 decoration: InputDecoration(
                   contentPadding: EdgeInsets.symmetric(
-                    vertical: screenHeight / 35,
+                    vertical: screenHeight / 50, // compact padding
                   ),
                   border: InputBorder.none,
                   hintText: hint,

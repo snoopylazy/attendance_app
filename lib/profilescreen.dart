@@ -15,7 +15,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   double screenHeight = 0;
   double screenWidth = 0;
-  Color primary = const Color(0xffeef444c);
+  Color primary = const Color(0xFFE53935);
   String birth = "Date of birth";
 
   TextEditingController firstNameController = TextEditingController();
@@ -57,7 +57,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _getProfilePic();
               },
               child: Container(
-                margin: const EdgeInsets.only(top: 80, bottom: 24),
+                margin: const EdgeInsets.only(top: 10, bottom: 24),
                 height: 120,
                 width: 120,
                 alignment: Alignment.center,
@@ -215,33 +215,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 )
                 : const SizedBox(),
 
-            // Logout button - Always visible
-            Container(
-              height: kToolbarHeight,
-              width: screenWidth,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4),
-                color: Colors.redAccent,
-              ),
-              child: TextButton(
-                onPressed: () async {
-                  final prefs = await SharedPreferences.getInstance();
-                  await prefs.clear();
-
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const LoginScreen(),
+            Align(
+              alignment: Alignment.centerRight, // Align right
+              child: SizedBox(
+                height: kToolbarHeight,
+                child: TextButton.icon(
+                  icon: const Icon(Icons.logout, color: Colors.white),
+                  label: const Text(
+                    "Log-out",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontFamily: "NexaBold",
+                      fontSize: 16,
                     ),
-                  );
-                },
-                child: const Text(
-                  "LOGOUT",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: "NexaBold",
-                    fontSize: 16,
                   ),
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.red[600],
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.clear();
+
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LoginScreen(),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -271,7 +275,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           padding: const EdgeInsets.only(left: 11),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: Colors.black54),
+            border: Border.all(color: primary, width: 2.5),
           ),
           child: Align(
             alignment: Alignment.centerLeft,
@@ -318,11 +322,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 color: Colors.black54,
                 fontFamily: "NexaBold",
               ),
-              enabledBorder: const OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.black54),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: primary),
               ),
-              focusedBorder: const OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.black54),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: primary),
               ),
             ),
           ),

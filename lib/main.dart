@@ -4,6 +4,7 @@ import 'package:attendance_app/loginscreen.dart';
 import 'package:attendance_app/model/user.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -13,6 +14,14 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   print("Firebase initialized successfully");
+
+  // Set status bar color to red
+  SystemChrome.setSystemUIOverlayStyle(
+    SystemUiOverlayStyle(
+      statusBarColor: Colors.red[600],
+      statusBarIconBrightness: Brightness.dark,
+    ),
+  );
 
   runApp(KeyboardVisibilityProvider(child: const MyApp()));
 }
@@ -33,7 +42,7 @@ class MyApp extends StatelessWidget {
       supportedLocales: const [
         Locale('en', ''), // English
       ],
-      home: const AuthCheck(), // ✅ no need to wrap here again
+      home: const AuthCheck(),
     );
   }
 }
