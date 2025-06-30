@@ -14,12 +14,7 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   print("Firebase initialized successfully");
 
-  runApp(
-    KeyboardVisibilityProvider(
-      // ✅ wrap your app here
-      child: const MyApp(),
-    ),
-  );
+  runApp(KeyboardVisibilityProvider(child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {
