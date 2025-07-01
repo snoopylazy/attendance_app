@@ -11,7 +11,6 @@ import 'package:location/location.dart';
 import 'package:slide_to_act/slide_to_act.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart' as geo;
-import 'package:location/location.dart';
 
 class TodayScreen extends StatefulWidget {
   const TodayScreen({Key? key}) : super(key: key);
@@ -47,8 +46,8 @@ class _TodayScreenState extends State<TodayScreen> {
 
   // Fetch In NUBB
   bool isWithinAllowedDistance(double userLat, double userLon) {
-    const double allowedLat = 13.0862629;
-    const double allowedLon = 103.2197316;
+    const double allowedLat = 13.0955211;
+    const double allowedLon = 103.2137035;
     const double allowedRadiusMeters = 100;
 
     double distance = geo.Geolocator.distanceBetween(
@@ -58,14 +57,114 @@ class _TodayScreenState extends State<TodayScreen> {
       allowedLon,
     );
 
+    print('=== LOCATION DEBUG ===');
+    print('User: $userLat, $userLon');
+    print('Target: $allowedLat, $allowedLon');
+    print('Distance: ${distance.toStringAsFixed(2)}m');
+    print('Allowed: ${allowedRadiusMeters}m');
+    print('Result: ${distance <= allowedRadiusMeters}');
+    print('====================');
+
     return distance <= allowedRadiusMeters;
+  }
+
+  // Define your custom locations
+  final Map<String, Map<String, double>> customLocations = {
+    'NUBB': {'lat': 13.0955211, 'lon': 103.2137035, 'radius': 200.0},
+    'Main Office': {'lat': 13.0862629, 'lon': 103.2197316, 'radius': 200.0},
+    // Add more locations as needed
+  };
+
+  // Store location
+  Future<void> _getLocationAddress(double latitude, double longitude) async {
+    try {
+      print('Getting address for: $latitude, $longitude');
+
+      // Check if user is at any of the custom locations
+      String? customLocationName = _getCustomLocationName(latitude, longitude);
+
+      if (customLocationName != null) {
+        print('Using custom location: $customLocationName');
+        setState(() {
+          checkInLocation = customLocationName;
+        });
+      } else {
+        print('Getting address from geocoding...');
+        // Get actual address for other locations
+        List<Placemark> placemark = await placemarkFromCoordinates(
+          latitude,
+          longitude,
+        );
+
+        if (placemark.isNotEmpty) {
+          setState(() {
+            checkInLocation =
+                "${placemark[0].street}, ${placemark[0].administrativeArea}, ${placemark[0].postalCode}, ${placemark[0].country}";
+          });
+          print('Address found: $checkInLocation');
+        } else {
+          setState(() {
+            checkInLocation = "No address found for this location";
+          });
+        }
+      }
+    } catch (e) {
+      print('Error getting location address: $e');
+      setState(() {
+        checkInLocation = "Location address unavailable: ${e.toString()}";
+      });
+    }
+  }
+
+  // Custome
+  String? _getCustomLocationName(double userLat, double userLon) {
+    print('=== CUSTOM LOCATION CHECK ===');
+    print('User location: $userLat, $userLon');
+
+    for (String locationName in customLocations.keys) {
+      Map<String, double> location = customLocations[locationName]!;
+
+      double distance = geo.Geolocator.distanceBetween(
+        userLat,
+        userLon,
+        location['lat']!,
+        location['lon']!,
+      );
+
+      print(
+        '$locationName - Distance: ${distance.toStringAsFixed(2)}m, Allowed: ${location['radius']}m',
+      );
+
+      if (distance <= location['radius']!) {
+        print('✅ Found match: $locationName');
+        return locationName;
+      }
+    }
+    print('❌ No custom location match found');
+    return null;
   }
 
   // Initialize LocationService
   Future<void> _initializeLocationService() async {
-    bool isInitialized = await _locationService.initialize();
-    if (!isInitialized) {
-      showCustomSnackBar("Unable to initialize location services!");
+    try {
+      bool isInitialized = await _locationService.initialize();
+      print('Location service initialized: $isInitialized');
+
+      if (!isInitialized) {
+        showCustomSnackBar("Unable to initialize location services!");
+        // Add more specific error handling here
+        return;
+      }
+
+      // Test getting current location
+      // Position? position = await _locationService.getCurrentPosition();
+      // if (position != null) {
+      //   print('Current position: ${position.latitude}, ${position.longitude}');
+      //   _getLocationAddress(position.latitude, position.longitude);
+      // }
+    } catch (e) {
+      print('Error initializing location service: $e');
+      showCustomSnackBar("Location service error: ${e.toString()}");
     }
   }
 
@@ -448,10 +547,10 @@ class _TodayScreenState extends State<TodayScreen> {
 
     // Modern red color
     primary = const Color(0xFFE53935); // Red 600
-    Color background = Colors.white;
+    // Color background = Colors.white;
 
     return Scaffold(
-      backgroundColor: background,
+      // backgroundColor: background,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -469,7 +568,7 @@ class _TodayScreenState extends State<TodayScreen> {
                 style: TextStyle(
                   color: primary,
                   fontFamily: "NexaRegular",
-                  fontSize: screenWidth / 22, // smaller text
+                  fontSize: screenWidth / 34,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.1,
                 ),
@@ -483,8 +582,8 @@ class _TodayScreenState extends State<TodayScreen> {
               child: Text(
                 "Student ID: ${User.employeeId}",
                 style: TextStyle(
-                  fontFamily: "NexaBold",
-                  fontSize: screenWidth / 24, // smaller text
+                  fontFamily: "NexaRegular",
+                  fontSize: screenWidth / 34,
                   color: Colors.black87,
                   fontWeight: FontWeight.w600,
                 ),
@@ -580,7 +679,7 @@ class _TodayScreenState extends State<TodayScreen> {
                     text: DateTime.now().day.toString(),
                     style: TextStyle(
                       color: primary,
-                      fontSize: screenWidth / 16,
+                      fontSize: screenWidth / 24,
                       fontFamily: "NexaBold",
                     ),
                     children: [
@@ -588,7 +687,7 @@ class _TodayScreenState extends State<TodayScreen> {
                         text: DateFormat(' MMMM yyyy').format(DateTime.now()),
                         style: TextStyle(
                           color: Colors.black87,
-                          fontSize: screenWidth / 22,
+                          fontSize: screenWidth / 24,
                           fontFamily: "NexaBold",
                         ),
                       ),
@@ -603,7 +702,7 @@ class _TodayScreenState extends State<TodayScreen> {
                       DateFormat('hh:mm:ss a').format(DateTime.now()),
                       style: TextStyle(
                         fontFamily: "NexaRegular",
-                        fontSize: screenWidth / 22,
+                        fontSize: screenWidth / 24,
                         color: primary,
                         fontWeight: FontWeight.w600,
                       ),
@@ -647,6 +746,7 @@ class _TodayScreenState extends State<TodayScreen> {
                             return;
                           }
 
+                          // Get location once
                           LocationData? locData =
                               await _locationService.getLocation();
                           if (locData == null ||
@@ -657,7 +757,7 @@ class _TodayScreenState extends State<TodayScreen> {
                             return;
                           }
 
-                          // New: Check allowed location radius
+                          // Check allowed location radius using the same location data
                           if (!isWithinAllowedDistance(
                             locData.latitude!,
                             locData.longitude!,
@@ -669,8 +769,13 @@ class _TodayScreenState extends State<TodayScreen> {
                             return;
                           }
 
-                          await _getLocation();
+                          // Get address using the same location data
+                          await _getLocationAddress(
+                            locData.latitude!,
+                            locData.longitude!,
+                          );
 
+                          // Rest of your code remains the same...
                           TimeOfDay now = TimeOfDay.now();
                           bool isLateCheckIn = false;
                           bool isEarlyCheckOut = false;
@@ -800,12 +905,12 @@ class _TodayScreenState extends State<TodayScreen> {
                   ),
                 )
                 : Container(
-                  margin: const EdgeInsets.only(top: 20, bottom: 20),
+                  margin: const EdgeInsets.only(top: 10, bottom: 10),
                   child: Text(
                     "You have completed this day!",
                     style: TextStyle(
                       fontFamily: "NexaRegular",
-                      fontSize: screenWidth / 20,
+                      fontSize: screenWidth / 24,
                       color: primary,
                       fontWeight: FontWeight.bold,
                     ),
@@ -819,14 +924,15 @@ class _TodayScreenState extends State<TodayScreen> {
                   children: [
                     Icon(Icons.location_on, color: primary, size: 20),
                     const SizedBox(width: 6),
-                    Expanded(
+                    Flexible(
                       child: Text(
-                        "Check-in Location: $checkInLocation",
+                        "Check-in: $checkInLocation",
                         style: TextStyle(
-                          color: Colors.black87,
-                          fontSize: screenWidth / 26,
+                          color: const Color.fromARGB(255, 0, 183, 6),
+                          fontSize: screenWidth / 28,
                           fontFamily: "NexaRegular",
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ),
                   ],
@@ -839,19 +945,21 @@ class _TodayScreenState extends State<TodayScreen> {
                   children: [
                     Icon(Icons.location_on, color: primary, size: 20),
                     const SizedBox(width: 6),
-                    Expanded(
+                    Flexible(
                       child: Text(
-                        "Check-out Location: $checkOutLocation",
+                        "Check-out: $checkOutLocation",
                         style: TextStyle(
-                          color: Colors.black87,
-                          fontSize: screenWidth / 26,
+                          color: Colors.blueGrey,
+                          fontSize: screenWidth / 28,
                           fontFamily: "NexaRegular",
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ),
                   ],
                 ),
               ),
+
             // QR Scan Button
             Center(
               child: GestureDetector(

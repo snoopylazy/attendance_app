@@ -7,6 +7,7 @@ import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:attendance_app/registerscreen.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -32,10 +33,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _showSplash = true;
 
+  // Add AudioPlayer instance
+  final AudioPlayer _player = AudioPlayer();
+
   // URl from telegram
   Future<void> openTelegram() async {
     final Uri url = Uri.parse("https://t.me/BenjaminKirby_BenTennyson");
-
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
       throw Exception('Could not launch $url');
     }
@@ -54,7 +57,15 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   // Method to show custom SnackBar
-  void showCustomSnackBar(String message, {bool isError = true}) {
+  void showCustomSnackBar(String message, {bool isError = true}) async {
+    if (isError) {
+      // Play error sound
+      await _player.play(AssetSource('sounds/errorSounds.wav'));
+    } else {
+      // Play success sound
+      await _player.play(AssetSource('sounds/successSounds.wav'));
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -108,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
           isKeyboardVisible
               ? SizedBox(height: screenHeight / 20)
               : Container(
-                height: screenHeight / 3.5, // Reduced height
+                height: screenHeight / 3.5,
                 width: screenWidth,
                 decoration: BoxDecoration(
                   color: primary,
@@ -128,19 +139,19 @@ class _LoginScreenState extends State<LoginScreen> {
           // Title
           Padding(
             padding: EdgeInsets.only(
-              top: screenHeight / 30, // Reduced top padding
+              top: screenHeight / 30,
               left: screenWidth / 15,
             ),
             child: Text(
               "Welcome Back!",
               style: TextStyle(
-                fontSize: screenWidth / 18, // Smaller font
+                fontSize: screenWidth / 22,
                 fontFamily: "NexaBold",
               ),
             ),
           ),
 
-          const SizedBox(height: 8), // Reduced spacing
+          const SizedBox(height: 8),
           // Login Form
           Expanded(
             child: SingleChildScrollView(
@@ -160,12 +171,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: openTelegram,
-                      child: Text(
-                        "Forgot Password?",
-                        style: TextStyle(
-                          fontFamily: "NexaLight",
-                          color: Colors.grey.shade600,
-                          fontSize: screenWidth / 32, // Slightly smaller
+                      child: TextButton(
+                        onPressed: openTelegram,
+                        child: Text(
+                          "Forgot Password?",
+                          style: TextStyle(
+                            fontFamily: "NexaLight",
+                            color: Colors.grey.shade600,
+                            fontSize: screenWidth / 32,
+                          ),
                         ),
                       ),
                     ),
@@ -249,7 +263,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               }
                             },
                     child: Container(
-                      height: 45, // Smaller button
+                      height: 45,
                       width: double.infinity,
                       margin: EdgeInsets.only(top: screenHeight / 40),
                       decoration: BoxDecoration(
@@ -280,7 +294,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
 
-                  SizedBox(height: screenHeight * 0.015), // Less space
+                  SizedBox(height: screenHeight * 0.015),
 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -325,14 +339,14 @@ class _LoginScreenState extends State<LoginScreen> {
   // Label
   Widget fieldTitle(String title) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 4),
       child: RichText(
         text: TextSpan(
           children: [
             TextSpan(
               text: title,
               style: TextStyle(
-                fontSize: screenWidth / 30,
+                fontSize: screenWidth / 38,
                 fontFamily: "NexaBold",
                 color: Colors.black,
               ),
@@ -340,7 +354,7 @@ class _LoginScreenState extends State<LoginScreen> {
             TextSpan(
               text: " *",
               style: TextStyle(
-                fontSize: screenWidth / 30,
+                fontSize: screenWidth / 38,
                 fontFamily: "NexaBold",
                 color: Colors.red,
               ),

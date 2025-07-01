@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -27,11 +28,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
   double screenWidth = 0;
   Color primary = const Color(0xFFE53935);
 
+  // Add AudioPlayer instance
+  final AudioPlayer _player = AudioPlayer();
+
   Future<void> _pickBirthDate() async {
-    DateTime? picked = await showDatePicker(
+    final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime(2000),
-      firstDate: DateTime(1900),
+      initialDate: DateTime(2000, 1, 1),
+      firstDate: DateTime(1950),
       lastDate: DateTime.now(),
     );
     if (picked != null) {
@@ -41,17 +45,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  void showCustomSnackBar(String message, {bool isError = true}) {
+  void showCustomSnackBar(String message, {bool isError = true}) async {
+    if (isError) {
+      // Play error sound
+      await _player.play(AssetSource('sounds/errorSounds.wav'));
+    } else {
+      // Play success sound
+      await _player.play(AssetSource('sounds/successSounds.wav'));
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           message,
-          textAlign: TextAlign.center,
           style: TextStyle(
             color: Colors.white,
             fontSize: screenWidth / 24,
             fontFamily: "NexaBold",
           ),
+          textAlign: TextAlign.center,
         ),
         backgroundColor: isError ? Colors.red[700] : Colors.green[600],
         behavior: SnackBarBehavior.floating,
@@ -126,14 +138,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Widget fieldTitle(String title) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 4),
       child: RichText(
         text: TextSpan(
           children: [
             TextSpan(
               text: title,
               style: TextStyle(
-                fontSize: screenWidth / 30,
+                fontSize: screenWidth / 36,
                 fontFamily: "NexaRegular",
                 color: Colors.black,
               ),
@@ -141,7 +153,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             TextSpan(
               text: " *",
               style: TextStyle(
-                fontSize: screenWidth / 30,
+                fontSize: screenWidth / 36,
                 fontFamily: "NexaRegular",
                 color: Colors.red,
               ),
@@ -160,19 +172,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
   ) {
     return Container(
       width: screenWidth,
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: const BoxDecoration(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.all(Radius.circular(12)),
-        boxShadow: [
-          BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(2, 2)),
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(1, 1)),
         ],
       ),
       child: Row(
         children: [
-          Container(
-            width: screenWidth / 7, // slightly smaller icon space
-            child: Icon(icon, color: primary, size: screenWidth / 18),
+          SizedBox(
+            width: screenWidth / 9,
+            child: Icon(icon, color: primary, size: screenWidth / 24),
           ),
           Expanded(
             child: Padding(
@@ -180,13 +192,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: TextFormField(
                 controller: controller,
                 obscureText: isPassword,
-                style: TextStyle(fontSize: screenWidth / 32),
+                style: TextStyle(fontSize: screenWidth / 36),
                 decoration: InputDecoration(
                   contentPadding: EdgeInsets.symmetric(
-                    vertical: screenHeight / 50, // reduced padding
+                    vertical: screenHeight / 60,
                   ),
                   border: InputBorder.none,
                   hintText: hint,
+                  hintStyle: TextStyle(fontSize: screenWidth / 36),
                 ),
               ),
             ),
@@ -202,12 +215,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      resizeToAvoidBottomInset: false,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            height: screenHeight / 3.5, // reduced from /2.8
+            height: screenHeight / 3.5,
             width: screenWidth,
             decoration: BoxDecoration(
               color: primary,
@@ -225,18 +237,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           Padding(
             padding: EdgeInsets.only(
-              top: screenHeight / 30, // smaller
-              left: screenWidth / 15,
+              top: screenHeight / 40,
+              left: screenWidth / 20,
             ),
             child: Text(
               "Create Account",
               style: TextStyle(
-                fontSize: screenWidth / 18, // smaller text
+                fontSize: screenWidth / 22,
                 fontFamily: "NexaBold",
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: screenWidth / 15),
@@ -300,9 +312,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: const [
                             BoxShadow(
-                              color: Colors.black26,
-                              blurRadius: 8,
-                              offset: Offset(2, 2),
+                              color: Colors.black12,
+                              blurRadius: 6,
+                              offset: Offset(1, 1),
                             ),
                           ],
                         ),
@@ -310,7 +322,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           _birthDate == null
                               ? 'Select your birth date'
                               : DateFormat.yMMMd().format(_birthDate!),
-                          style: TextStyle(color: Colors.grey[700]),
+                          style: TextStyle(
+                            fontSize: screenWidth / 36,
+                            color: Colors.grey[700],
+                          ),
                         ),
                       ),
                     ),
@@ -318,17 +333,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     GestureDetector(
                       onTap: _isLoading ? null : _register,
                       child: Container(
-                        height: 45, // reduced
+                        height: 42,
                         width: double.infinity,
-                        margin: EdgeInsets.only(top: screenHeight / 40),
+                        margin: EdgeInsets.only(top: screenHeight / 60),
                         decoration: BoxDecoration(
                           color: _isLoading ? Colors.grey : primary,
-                          borderRadius: BorderRadius.circular(30),
+                          borderRadius: BorderRadius.circular(24),
                           boxShadow: [
                             BoxShadow(
                               color: primary.withOpacity(0.4),
-                              offset: const Offset(0, 4),
-                              blurRadius: 10,
+                              offset: const Offset(0, 3),
+                              blurRadius: 8,
                             ),
                           ],
                         ),
@@ -336,15 +351,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           child:
                               _isLoading
                                   ? const CircularProgressIndicator(
-                                    color: Colors.red,
+                                    color: Colors.white,
                                   )
                                   : Text(
                                     "REGISTER",
                                     style: TextStyle(
                                       fontFamily: "NexaBold",
-                                      fontSize: screenWidth / 28,
+                                      fontSize: screenWidth / 32,
                                       color: Colors.white,
-                                      letterSpacing: 1.2,
+                                      letterSpacing: 1.1,
                                     ),
                                   ),
                         ),
@@ -360,7 +375,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           style: TextStyle(
                             fontFamily: "NexaLight",
                             color: Colors.grey.shade600,
-                            fontSize: screenWidth / 32,
+                            fontSize: screenWidth / 36,
                           ),
                         ),
                         GestureDetector(
@@ -370,7 +385,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             style: TextStyle(
                               fontFamily: "NexaBold",
                               color: primary,
-                              fontSize: screenWidth / 32,
+                              fontSize: screenWidth / 36,
                             ),
                           ),
                         ),

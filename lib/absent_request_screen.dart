@@ -321,46 +321,38 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
           backgroundColor: primary,
           foregroundColor: Colors.white,
           centerTitle: true,
-          elevation: 4,
+          elevation: 2,
           shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(12)),
           ),
         ),
         body: Column(
           children: [
             if (!isAdmin) ...[
               Container(
-                margin: const EdgeInsets.all(12),
-                padding: const EdgeInsets.all(16),
+                margin: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12),
                   boxShadow: const [
                     BoxShadow(
                       color: Colors.black12,
-                      blurRadius: 8,
-                      offset: Offset(2, 2),
+                      blurRadius: 4,
+                      offset: Offset(1, 1),
                     ),
                   ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Date pickers row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              "From Date:",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                                fontSize: 14,
-                              ),
-                            ),
+                            const Text("From:", style: TextStyle(fontSize: 12)),
                             TextButton(
                               onPressed: () async {
                                 DateTime? picked = await showDatePicker(
@@ -381,7 +373,7 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
                               },
                               style: TextButton.styleFrom(
                                 foregroundColor: Colors.red[600],
-                                textStyle: const TextStyle(fontSize: 16),
+                                textStyle: const TextStyle(fontSize: 13),
                               ),
                               child: Text(
                                 _fromDate != null
@@ -394,14 +386,7 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              "To Date:",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                                fontSize: 14,
-                              ),
-                            ),
+                            const Text("To:", style: TextStyle(fontSize: 12)),
                             TextButton(
                               onPressed: () async {
                                 DateTime? picked = await showDatePicker(
@@ -417,7 +402,7 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
                               },
                               style: TextButton.styleFrom(
                                 foregroundColor: Colors.red[600],
-                                textStyle: const TextStyle(fontSize: 16),
+                                textStyle: const TextStyle(fontSize: 13),
                               ),
                               child: Text(
                                 _toDate != null
@@ -429,61 +414,51 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
                         ),
                       ],
                     ),
-
-                    const SizedBox(height: 12),
-
-                    // Reason TextField
+                    const SizedBox(height: 8),
                     TextField(
                       controller: _reasonController,
-                      maxLines: 3,
-                      style: const TextStyle(
-                        color: Colors.black87,
-                        fontSize: 16,
-                      ),
+                      maxLines: 2,
+                      style: const TextStyle(fontSize: 13),
                       decoration: InputDecoration(
                         labelText: "Reason",
                         labelStyle: TextStyle(
                           color: Colors.red[600],
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 13,
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide(color: Colors.red[600]!),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide(color: Colors.red[300]!),
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
-
-                    const SizedBox(height: 16),
-
-                    // Submit Button
+                    const SizedBox(height: 12),
                     Center(
                       child: ElevatedButton.icon(
+                        onPressed: _submitRequest,
+                        icon: const Icon(
+                          Icons.send,
+                          size: 18,
+                          color: Colors.white,
+                        ),
+                        label: const Text(
+                          "Submit",
+                          style: TextStyle(fontSize: 13, color: Colors.white),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red[600],
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
+                            horizontal: 16,
+                            vertical: 10,
                           ),
-                          elevation: 5,
-                        ),
-                        onPressed: _submitRequest,
-                        icon: const Icon(Icons.send, color: Colors.white),
-                        label: const Text(
-                          "Submit Request",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
                           ),
+                          elevation: 3,
                         ),
                       ),
                     ),
@@ -492,45 +467,43 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
               ),
             ],
 
-            // Filter chips
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
               child: Wrap(
-                spacing: 12,
-                runSpacing: 10,
+                spacing: 6,
+                runSpacing: 6,
                 children:
                     RequestStatus.values.map((status) {
                       final label =
                           status.name[0].toUpperCase() +
                           status.name.substring(1);
                       final isSelected = selectedStatus == status;
-
                       return ChoiceChip(
                         label: Text(
                           label,
                           style: TextStyle(
+                            fontSize: 11,
                             color: isSelected ? Colors.white : Colors.black87,
-                            fontWeight: FontWeight.w600,
                           ),
                         ),
                         selected: isSelected,
                         selectedColor: Colors.red[600],
                         backgroundColor: Colors.white,
-                        elevation: isSelected ? 4 : 1,
-                        pressElevation: 6,
+                        elevation: 1,
+                        pressElevation: 2,
                         shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
                           side: BorderSide(
                             color:
                                 isSelected
                                     ? Colors.red[600]!
                                     : Colors.grey[300]!,
-                            width: 1.4,
+                            width: 1,
                           ),
-                          borderRadius: BorderRadius.circular(24),
                         ),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
+                          horizontal: 10,
+                          vertical: 5,
                         ),
                         onSelected:
                             (_) => setState(() => selectedStatus = status),
@@ -539,7 +512,6 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
               ),
             ),
 
-            // Expanded List of requests
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream:
@@ -553,28 +525,23 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
                   }
 
                   final allRequests = snapshot.data!.docs;
-
                   final requests =
                       allRequests.where((doc) {
-                        final bool matchesStatus =
+                        final matchesStatus =
                             selectedStatus == RequestStatus.all
                                 ? true
                                 : doc['status'].toString().toLowerCase() ==
                                     selectedStatus.name.toLowerCase();
-
-                        final bool canView =
-                            isAdmin
-                                ? true
-                                : doc['employeeId'] == User.employeeId;
-
+                        final canView =
+                            isAdmin || doc['employeeId'] == User.employeeId;
                         return matchesStatus && canView;
                       }).toList();
 
                   if (requests.isEmpty) {
-                    return Center(
+                    return const Center(
                       child: Text(
                         "No requests found.",
-                        style: TextStyle(color: Colors.black54, fontSize: 16),
+                        style: TextStyle(fontSize: 13),
                       ),
                     );
                   }
@@ -583,47 +550,39 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
                     itemCount: requests.length,
                     itemBuilder: (context, index) {
                       final data = requests[index];
-
-                      final bool canEditOrDelete =
+                      final canEditOrDelete =
                           !isAdmin &&
                           data['employeeId'] == User.employeeId &&
                           data['status'] == 'Pending';
 
                       return Card(
                         margin: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
+                          horizontal: 10,
+                          vertical: 6,
                         ),
-                        elevation: 4,
-                        color: Colors.white,
+                        elevation: 2,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(12),
                           side: BorderSide(
                             color: Colors.red.shade100,
-                            width: 1.2,
+                            width: 1,
                           ),
                         ),
                         child: Padding(
-                          padding: const EdgeInsets.all(16.0),
+                          padding: const EdgeInsets.all(12),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Header with icon and name
                               Row(
                                 children: [
-                                  const Icon(
-                                    Icons.person,
-                                    size: 22,
-                                    color: Colors.black87,
-                                  ),
-                                  const SizedBox(width: 8),
+                                  const Icon(Icons.person, size: 18),
+                                  const SizedBox(width: 6),
                                   Expanded(
                                     child: Text(
                                       data['name'],
                                       style: const TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 14,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.black87,
                                       ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -631,139 +590,143 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
                                   _buildStatusBadge(data['status']),
                                 ],
                               ),
-
-                              const SizedBox(height: 12),
-
-                              // Date Info
+                              const SizedBox(height: 8),
                               Row(
                                 children: [
-                                  const Icon(
-                                    Icons.date_range,
-                                    size: 20,
-                                    color: Colors.black54,
-                                  ),
-                                  const SizedBox(width: 8),
+                                  const Icon(Icons.date_range, size: 16),
+                                  const SizedBox(width: 6),
                                   Expanded(
                                     child: Text(
-                                      "From: ${DateFormat.yMMMd().format(DateTime.parse(data['fromDate']))} → "
-                                      "To: ${DateFormat.yMMMd().format(DateTime.parse(data['toDate']))}",
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.black87,
-                                      ),
+                                      "${DateFormat.yMMMd().format(DateTime.parse(data['fromDate']))} → ${DateFormat.yMMMd().format(DateTime.parse(data['toDate']))}",
+                                      style: const TextStyle(fontSize: 12),
                                     ),
                                   ),
                                 ],
                               ),
-
-                              const SizedBox(height: 6),
-
-                              // Reason
+                              const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  const Icon(
-                                    Icons.edit_note_rounded,
-                                    size: 20,
-                                    color: Colors.black54,
-                                  ),
-                                  const SizedBox(width: 8),
+                                  const Icon(Icons.edit_note, size: 16),
+                                  const SizedBox(width: 6),
                                   Expanded(
                                     child: Text(
                                       "Reason: ${data['reason']}",
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.black87,
-                                      ),
+                                      style: const TextStyle(fontSize: 12),
                                     ),
                                   ),
                                 ],
                               ),
-
-                              const SizedBox(height: 12),
-
-                              // Admin Approve/Reject Buttons
-                              if (isAdmin && data['status'] == 'Pending') ...[
+                              const SizedBox(height: 8),
+                              if (isAdmin && data['status'] == 'Pending')
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
-                                    ElevatedButton.icon(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.green[600],
-                                        foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            30,
-                                          ),
-                                        ),
-                                      ),
+                                    ElevatedButton(
                                       onPressed:
                                           () => _approveRejectRequest(
                                             data.id,
                                             'Approved',
                                           ),
-                                      icon: const Icon(Icons.check),
-                                      label: const Text("Approve"),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    ElevatedButton.icon(
+                                      child: const Text(
+                                        "Approve",
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white,
+                                        ),
+                                      ),
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.red[600],
-                                        foregroundColor: Colors.white,
+                                        backgroundColor: Colors.green[600],
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 8,
+                                        ),
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
-                                            30,
+                                            20,
                                           ),
                                         ),
                                       ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    ElevatedButton(
                                       onPressed:
                                           () => _approveRejectRequest(
                                             data.id,
                                             'Rejected',
                                           ),
-                                      icon: const Icon(Icons.close),
-                                      label: const Text("Reject"),
+                                      child: const Text(
+                                        "Reject",
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red[600],
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 8,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),
-                              ],
-
-                              // User Edit/Delete Buttons
-                              if (canEditOrDelete) ...[
+                              if (canEditOrDelete)
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
-                                    ElevatedButton.icon(
+                                    ElevatedButton(
+                                      onPressed: () => _showEditDialog(data),
+                                      child: const Text(
+                                        "Edit",
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white,
+                                        ),
+                                      ),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.orange[600],
-                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 8,
+                                        ),
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
-                                            30,
+                                            20,
                                           ),
                                         ),
                                       ),
-                                      onPressed: () => _showEditDialog(data),
-                                      icon: const Icon(Icons.edit),
-                                      label: const Text("Edit"),
                                     ),
-                                    const SizedBox(width: 8),
-                                    ElevatedButton.icon(
+                                    const SizedBox(width: 6),
+                                    ElevatedButton(
+                                      onPressed: () => _deleteRequest(data.id),
+                                      child: const Text(
+                                        "Delete",
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white,
+                                        ),
+                                      ),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.grey[700],
-                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 8,
+                                        ),
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
-                                            30,
+                                            20,
                                           ),
                                         ),
                                       ),
-                                      onPressed: () => _deleteRequest(data.id),
-                                      icon: const Icon(Icons.delete),
-                                      label: const Text("Delete"),
                                     ),
                                   ],
                                 ),
-                              ],
                             ],
                           ),
                         ),

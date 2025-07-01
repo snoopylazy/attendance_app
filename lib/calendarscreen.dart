@@ -35,13 +35,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 "My Attendance",
                 style: TextStyle(
                   fontFamily: "NexaBold",
-                  fontSize: screenWidth / 22,
+                  fontSize: screenWidth / 34,
                   color: Colors.grey[800],
                   letterSpacing: 1.2,
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -49,7 +49,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     _month ?? "Select Month",
                     style: TextStyle(
                       fontFamily: "NexaBold",
-                      fontSize: screenWidth / 22,
+                      fontSize: screenWidth / 24,
                       color: Colors.grey[900],
                     ),
                   ),
@@ -94,16 +94,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
+                        horizontal: 14,
+                        vertical: 10,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(
+                          color: Colors.red.shade300,
+                          width: 1.2,
+                        ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black12,
+                            color: Colors.red.withOpacity(0.1),
                             blurRadius: 6,
                             offset: const Offset(0, 3),
                           ),
@@ -113,23 +116,24 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            Icons.calendar_month,
-                            color: Colors.grey[700],
-                            size: screenWidth / 26,
+                            Icons.calendar_today_rounded,
+                            color: Colors.red[600],
+                            size: screenWidth / 24,
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 8),
                           Text(
                             _month ?? "Pick a Month",
                             style: TextStyle(
                               fontFamily: "NexaBold",
                               fontSize: screenWidth / 26,
-                              color: Colors.grey[800],
+                              color: Colors.black87,
                             ),
                           ),
+                          const SizedBox(width: 4),
                           Icon(
                             Icons.arrow_drop_down,
-                            color: Colors.grey[700],
-                            size: screenWidth / 26,
+                            color: Colors.red[600],
+                            size: screenWidth / 22,
                           ),
                         ],
                       ),
