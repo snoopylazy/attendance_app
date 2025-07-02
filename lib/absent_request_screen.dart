@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-// import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../model/user.dart';
 
 class AbsentRequestScreen extends StatefulWidget {
@@ -36,10 +35,31 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
       'timestamp': Timestamp.now(),
     });
 
+    // Show Message
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text("Request submitted successfully"),
-        backgroundColor: Colors.green,
+        content: Row(
+          children: [
+            Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                "Request submitted successfully",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontFamily: "NexaBold",
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.green.shade600,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 8,
+        duration: const Duration(seconds: 3),
       ),
     );
 
@@ -58,7 +78,30 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
         .update({'status': status});
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("successfully"), backgroundColor: Colors.green),
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                "Request $status successfully",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontFamily: "NexaBold",
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.green.shade600,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 8,
+        duration: const Duration(seconds: 3),
+      ),
     );
   }
 
@@ -83,6 +126,8 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.black87,
+              fontSize: 20,
+              fontFamily: "NexaBold",
             ),
           ),
           content: StatefulBuilder(
@@ -93,8 +138,11 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
-                      "📅 From Date:",
-                      style: TextStyle(fontWeight: FontWeight.w600),
+                      "From Date:",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontFamily: "NexaRegular",
+                      ),
                     ),
                     const SizedBox(height: 4),
                     TextButton.icon(
@@ -104,7 +152,28 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
                           initialDate: editFromDate,
                           firstDate: DateTime(2023),
                           lastDate: DateTime(2100),
+                          builder: (context, child) {
+                            return Theme(
+                              data: Theme.of(context).copyWith(
+                                colorScheme: ColorScheme.light(
+                                  primary:
+                                      Colors
+                                          .red[600]!, // Header background & selected date
+                                  onPrimary: Colors.white, // Header text color
+                                  onSurface: Colors.black, // Default text color
+                                ),
+                                textButtonTheme: TextButtonThemeData(
+                                  style: TextButton.styleFrom(
+                                    foregroundColor:
+                                        Colors.red[600], // OK/Cancel buttons
+                                  ),
+                                ),
+                              ),
+                              child: child!,
+                            );
+                          },
                         );
+
                         if (picked != null) {
                           setStateDialog(() {
                             editFromDate = picked;
@@ -114,14 +183,29 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
                           });
                         }
                       },
-                      icon: const Icon(Icons.calendar_today, size: 18),
-                      label: Text(DateFormat.yMMMd().format(editFromDate)),
+                      icon: const Icon(
+                        Icons.calendar_today,
+                        size: 18,
+                        color: Colors.red,
+                      ),
+                      label: Text(
+                        DateFormat.yMMMd().format(editFromDate),
+                        style: TextStyle(
+                          color: Colors.red[600],
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: "NexaBold",
+                        ),
+                      ),
                     ),
 
                     const SizedBox(height: 12),
                     const Text(
-                      "📅 To Date:",
-                      style: TextStyle(fontWeight: FontWeight.w600),
+                      "To Date:",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontFamily: "NexaRegular",
+                      ),
                     ),
                     const SizedBox(height: 4),
                     TextButton.icon(
@@ -131,25 +215,63 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
                           initialDate: editToDate,
                           firstDate: editFromDate,
                           lastDate: DateTime(2100),
+                          builder: (context, child) {
+                            return Theme(
+                              data: Theme.of(context).copyWith(
+                                colorScheme: ColorScheme.light(
+                                  primary:
+                                      Colors
+                                          .red[600]!, // Header & selected date
+                                  onPrimary: Colors.white, // Text on header
+                                  onSurface: Colors.black, // Default text color
+                                ),
+                                textButtonTheme: TextButtonThemeData(
+                                  style: TextButton.styleFrom(
+                                    foregroundColor:
+                                        Colors
+                                            .red[600], // OK/Cancel button text
+                                  ),
+                                ),
+                              ),
+                              child: child!,
+                            );
+                          },
                         );
+
                         if (picked != null) {
                           setStateDialog(() {
                             editToDate = picked;
                           });
                         }
                       },
-                      icon: const Icon(Icons.calendar_today, size: 18),
-                      label: Text(DateFormat.yMMMd().format(editToDate)),
+                      icon: const Icon(
+                        Icons.calendar_today,
+                        size: 18,
+                        color: Colors.red,
+                      ),
+                      label: Text(
+                        DateFormat.yMMMd().format(editToDate),
+                        style: TextStyle(
+                          color: Colors.red[600],
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: "NexaBold",
+                        ),
+                      ),
                     ),
 
                     const SizedBox(height: 16),
                     const Text(
-                      "📝 Reason:",
-                      style: TextStyle(fontWeight: FontWeight.w600),
+                      "Reason:",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontFamily: "NexaRegular",
+                      ),
                     ),
                     const SizedBox(height: 6),
                     TextField(
                       controller: editReasonController,
+                      style: TextStyle(fontFamily: "NexaRegular"),
                       maxLines: 3,
                       decoration: InputDecoration(
                         hintText: "Enter reason for absence",
@@ -172,7 +294,7 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
               onPressed: () => Navigator.pop(context),
               child: const Text(
                 "Cancel",
-                style: TextStyle(color: Colors.black87),
+                style: TextStyle(color: Colors.black87, fontFamily: "NexaBold"),
               ),
             ),
             ElevatedButton.icon(
@@ -192,16 +314,51 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
                       'toDate': editToDate.toIso8601String(),
                       'reason': editReasonController.text.trim(),
                     });
+
                 Navigator.pop(context);
+
+                //  Beautiful success SnackBar
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Request updated"),
-                    backgroundColor: Colors.green,
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(
+                          Icons.check_circle_outline,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text(
+                            "Request updated successfully",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontFamily: "NexaBold",
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    backgroundColor: Colors.green.shade600,
+                    behavior: SnackBarBehavior.floating,
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 8,
+                    duration: const Duration(seconds: 3),
                   ),
                 );
               },
               icon: const Icon(Icons.save),
-              label: const Text("Save"),
+              label: const Text(
+                "Save",
+                style: TextStyle(fontFamily: "NexaBold"),
+              ),
             ),
           ],
         );
@@ -215,12 +372,21 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
       context: context,
       builder:
           (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             title: const Text(
               "Confirm Delete",
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: Colors.black87,
+                fontFamily: "NexaBold",
+              ),
             ),
             content: const Text(
-              "Are you sure you want to delete this request? This action cannot be undone.",
+              "Are you sure you want to delete this request?\nThis action cannot be undone.",
+              style: TextStyle(fontSize: 15, fontFamily: "NexaRegular"),
             ),
             actionsPadding: const EdgeInsets.symmetric(
               horizontal: 16,
@@ -231,7 +397,10 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
                 onPressed: () => Navigator.pop(context, false),
                 child: const Text(
                   "Cancel",
-                  style: TextStyle(color: Colors.black87),
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontFamily: "NexaBold",
+                  ),
                 ),
               ),
               ElevatedButton.icon(
@@ -243,8 +412,11 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
                   ),
                 ),
                 onPressed: () => Navigator.pop(context, true),
-                icon: const Icon(Icons.delete),
-                label: const Text("Delete"),
+                icon: const Icon(Icons.delete_outline),
+                label: const Text(
+                  "Delete",
+                  style: TextStyle(fontFamily: "NexaBold"),
+                ),
               ),
             ],
           ),
@@ -257,9 +429,31 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
           .delete();
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Request deleted"),
-          backgroundColor: Colors.redAccent,
+        SnackBar(
+          content: Row(
+            children: const [
+              Icon(Icons.delete_outline, color: Colors.white, size: 20),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  "Request deleted successfully",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontFamily: "NexaBold",
+                  ),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.red.shade600,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 8,
+          duration: const Duration(seconds: 3),
         ),
       );
     }
@@ -302,6 +496,7 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
               color: color,
               fontWeight: FontWeight.bold,
               fontSize: 13,
+              fontFamily: "NexaRegular",
             ),
           ),
         ],
@@ -347,10 +542,10 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             const Text("From:", style: TextStyle(fontSize: 12)),
                             TextButton(
@@ -360,7 +555,33 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
                                   initialDate: _fromDate ?? DateTime.now(),
                                   firstDate: DateTime(2023),
                                   lastDate: DateTime(2100),
+                                  builder: (context, child) {
+                                    return Theme(
+                                      data: Theme.of(context).copyWith(
+                                        colorScheme: ColorScheme.light(
+                                          primary:
+                                              Colors
+                                                  .red[600]!, // Header & selected date
+                                          onPrimary:
+                                              Colors
+                                                  .white, // Text color on header
+                                          onSurface:
+                                              Colors
+                                                  .black, // Default text color
+                                        ),
+                                        textButtonTheme: TextButtonThemeData(
+                                          style: TextButton.styleFrom(
+                                            foregroundColor:
+                                                Colors
+                                                    .red[600], // Button text (Cancel/OK)
+                                          ),
+                                        ),
+                                      ),
+                                      child: child!,
+                                    );
+                                  },
                                 );
+
                                 if (picked != null) {
                                   setState(() {
                                     _fromDate = picked;
@@ -372,8 +593,25 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
                                 }
                               },
                               style: TextButton.styleFrom(
-                                foregroundColor: Colors.red[600],
-                                textStyle: const TextStyle(fontSize: 13),
+                                foregroundColor:
+                                    Colors.red[600], // Text & splash
+                                backgroundColor:
+                                    Colors.red[50], // Soft red background
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 10,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(
+                                    color: Colors.red[600]!,
+                                  ), // Red border
+                                ),
+                                textStyle: const TextStyle(
+                                  fontSize: 13,
+                                  fontFamily:
+                                      "NexaBold", // optional: use your desired font
+                                ),
                               ),
                               child: Text(
                                 _fromDate != null
@@ -384,7 +622,7 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
                           ],
                         ),
                         Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             const Text("To:", style: TextStyle(fontSize: 12)),
                             TextButton(
@@ -395,14 +633,56 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
                                       _toDate ?? (_fromDate ?? DateTime.now()),
                                   firstDate: _fromDate ?? DateTime(2023),
                                   lastDate: DateTime(2100),
+                                  builder: (context, child) {
+                                    return Theme(
+                                      data: Theme.of(context).copyWith(
+                                        colorScheme: ColorScheme.light(
+                                          primary:
+                                              Colors
+                                                  .red[600]!, // Header background & selected date
+                                          onPrimary:
+                                              Colors
+                                                  .white, // Text color on header
+                                          onSurface:
+                                              Colors.black, // Default body text
+                                        ),
+                                        textButtonTheme: TextButtonThemeData(
+                                          style: TextButton.styleFrom(
+                                            foregroundColor:
+                                                Colors
+                                                    .red[600], // OK & Cancel button colors
+                                          ),
+                                        ),
+                                      ),
+                                      child: child!,
+                                    );
+                                  },
                                 );
+
                                 if (picked != null) {
                                   setState(() => _toDate = picked);
                                 }
                               },
                               style: TextButton.styleFrom(
-                                foregroundColor: Colors.red[600],
-                                textStyle: const TextStyle(fontSize: 13),
+                                foregroundColor:
+                                    Colors.red[600], // Text & splash color
+                                backgroundColor:
+                                    Colors.red[50], // Light red background
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 10,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(
+                                    color: Colors.red[600]!,
+                                  ), // Red border
+                                ),
+                                textStyle: const TextStyle(
+                                  fontSize: 13,
+                                  fontFamily:
+                                      "NexaBold", // Optional custom font
+                                ),
                               ),
                               child: Text(
                                 _toDate != null

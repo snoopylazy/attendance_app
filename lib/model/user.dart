@@ -11,4 +11,8 @@ class User {
   static double lat = 0;
   static double long = 0;
   static bool canEdit = true;
+
+  // ✅  Check if current user is Admin
+  static bool get isAdmin =>
+      employeeId.trim() == 'A123456' || lastName.trim() == 'Monthy';
 }

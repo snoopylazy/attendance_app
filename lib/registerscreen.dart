@@ -46,33 +46,47 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void showCustomSnackBar(String message, {bool isError = true}) async {
-    if (isError) {
-      // Play error sound
-      await _player.play(AssetSource('sounds/errorSounds.wav'));
-    } else {
-      // Play success sound
-      await _player.play(AssetSource('sounds/successSounds.wav'));
-    }
+    // Play sound based on message type
+    await _player.play(
+      AssetSource(
+        isError ? 'sounds/errorSounds.wav' : 'sounds/successSounds.wav',
+      ),
+    );
+
+    // Define style
+    final Color backgroundColor =
+        isError ? Colors.red.shade600 : Colors.green.shade500;
+    final IconData icon =
+        isError ? Icons.error_outline : Icons.check_circle_outline;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: screenWidth / 24,
-            fontFamily: "NexaBold",
-          ),
-          textAlign: TextAlign.center,
+        content: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white, size: screenWidth / 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: screenWidth / 26,
+                  fontFamily: "NexaBold",
+                  height: 1.3,
+                ),
+              ),
+            ),
+          ],
         ),
-        backgroundColor: isError ? Colors.red[700] : Colors.green[600],
+        backgroundColor: backgroundColor,
         behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.only(
-          top: screenHeight * 0.05,
-          left: screenWidth * 0.1,
-          right: screenWidth * 0.1,
+        elevation: 10,
+        margin: EdgeInsets.symmetric(
+          horizontal: screenWidth * 0.08,
+          vertical: screenHeight * 0.05,
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         duration: const Duration(seconds: 3),
       ),
     );
@@ -192,7 +206,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: TextFormField(
                 controller: controller,
                 obscureText: isPassword,
-                style: TextStyle(fontSize: screenWidth / 36),
+                style: TextStyle(
+                  fontSize: screenWidth / 36,
+                  fontFamily: "NexaRegular",
+                ),
                 decoration: InputDecoration(
                   contentPadding: EdgeInsets.symmetric(
                     vertical: screenHeight / 60,
@@ -373,7 +390,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         Text(
                           "Already have an account? ",
                           style: TextStyle(
-                            fontFamily: "NexaLight",
+                            fontFamily: "NexaRegular",
                             color: Colors.grey.shade600,
                             fontSize: screenWidth / 36,
                           ),

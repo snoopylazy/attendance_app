@@ -58,33 +58,47 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // Method to show custom SnackBar
   void showCustomSnackBar(String message, {bool isError = true}) async {
-    if (isError) {
-      // Play error sound
-      await _player.play(AssetSource('sounds/errorSounds.wav'));
-    } else {
-      // Play success sound
-      await _player.play(AssetSource('sounds/successSounds.wav'));
-    }
+    // Play appropriate sound
+    await _player.play(
+      AssetSource(
+        isError ? 'sounds/errorSounds.wav' : 'sounds/successSounds.wav',
+      ),
+    );
 
+    // Define colors and icon
+    final backgroundColor =
+        isError ? Colors.red.shade600 : Colors.green.shade500;
+    final icon = isError ? Icons.error_outline : Icons.check_circle_outline;
+
+    // Show the custom SnackBar
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: screenWidth / 24,
-            fontFamily: "NexaBold",
-          ),
-          textAlign: TextAlign.center,
+        content: Row(
+          children: [
+            Icon(icon, color: Colors.white, size: screenWidth / 18),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: screenWidth / 26,
+                  fontFamily: "NexaBold",
+                  height: 1.3,
+                ),
+                textAlign: TextAlign.left,
+              ),
+            ),
+          ],
         ),
-        backgroundColor: isError ? Colors.red[700] : Colors.green[600],
+        backgroundColor: backgroundColor,
         behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.only(
-          top: screenHeight * 0.05,
-          left: screenWidth * 0.1,
-          right: screenWidth * 0.1,
+        elevation: 10,
+        margin: EdgeInsets.symmetric(
+          horizontal: screenWidth * 0.1,
+          vertical: screenHeight * 0.05,
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         duration: const Duration(seconds: 3),
       ),
     );
@@ -176,7 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Text(
                           "Forgot Password?",
                           style: TextStyle(
-                            fontFamily: "NexaLight",
+                            fontFamily: "NexaRegular",
                             color: Colors.grey.shade600,
                             fontSize: screenWidth / 32,
                           ),
@@ -302,7 +316,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Text(
                         "Don't have an account? ",
                         style: TextStyle(
-                          fontFamily: "NexaLight",
+                          fontFamily: "NexaRegular",
                           color: Colors.grey.shade600,
                           fontSize: screenWidth / 32,
                         ),
@@ -400,10 +414,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 enableSuggestions: false,
                 autocorrect: false,
                 maxLines: 1,
-                style: TextStyle(fontSize: screenWidth / 32),
+                style: TextStyle(
+                  fontSize: screenWidth / 32,
+                  fontFamily: "NexaRegular",
+                ),
                 decoration: InputDecoration(
                   contentPadding: EdgeInsets.symmetric(
-                    vertical: screenHeight / 50, // compact padding
+                    vertical: screenHeight / 50,
                   ),
                   border: InputBorder.none,
                   hintText: hint,

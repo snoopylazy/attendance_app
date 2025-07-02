@@ -11,6 +11,7 @@ import 'package:location/location.dart';
 import 'package:slide_to_act/slide_to_act.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart' as geo;
+import 'package:audioplayers/audioplayers.dart';
 
 class TodayScreen extends StatefulWidget {
   const TodayScreen({Key? key}) : super(key: key);
@@ -32,8 +33,17 @@ class _TodayScreenState extends State<TodayScreen> {
 
   Color primary = const Color(0xffeef444c);
 
+  int _pendingRequestCount = 0;
+  late StreamSubscription<QuerySnapshot> _pendingRequestsSubscription;
+
+  // static bool get isAdmin =>
+  //     User.employeeId == 'A123456' || User.lastName == 'Monthy';
+
   final GlobalKey<SlideActionState> _slideKey = GlobalKey<SlideActionState>();
   final LocationService _locationService = LocationService();
+
+  // Add AudioPlayer instance
+  final AudioPlayer _player = AudioPlayer();
 
   @override
   void initState() {
@@ -42,10 +52,126 @@ class _TodayScreenState extends State<TodayScreen> {
     _getRecord();
     _getOfficeCode();
     _loadTodayRecord();
+
+    // Start real-time listener instead of one-time fetch
+    _pendingRequestsSubscription = FirebaseFirestore.instance
+        .collection("requestabsent")
+        .where("status", isEqualTo: "Pending")
+        .snapshots()
+        .listen((snapshot) {
+          setState(() {
+            _pendingRequestCount = snapshot.docs.length;
+          });
+        });
+  }
+
+  @override
+  void dispose() {
+    // Cancel listener to prevent memory leaks
+    _pendingRequestsSubscription.cancel();
+    super.dispose();
+  }
+
+  // Fetch All Request Absent
+  // void _fetchPendingRequests() async {
+  //   QuerySnapshot snapshot =
+  //       await FirebaseFirestore.instance
+  //           .collection("requestabsent")
+  //           .where("status", isEqualTo: "Pending")
+  //           .get();
+
+  //   setState(() {
+  //     _pendingRequestCount = snapshot.docs.length;
+  //   });
+  // }
+
+  // Notification
+  void _showPopupMenu(Offset position) async {
+    final snapshot =
+        await FirebaseFirestore.instance
+            .collection("requestabsent")
+            .where("status", isEqualTo: "Pending")
+            .get();
+
+    final requests = snapshot.docs;
+
+    final List<PopupMenuEntry<int>> menuItems = [];
+
+    if (requests.isEmpty) {
+      menuItems.add(
+        const PopupMenuItem<int>(
+          value: 0,
+          child: Row(
+            children: [
+              Icon(Icons.info_outline, color: Colors.redAccent),
+              SizedBox(width: 8),
+              Text("No ask for permission"),
+            ],
+          ),
+        ),
+      );
+    } else {
+      for (int i = 0; i < requests.length; i++) {
+        final data = requests[i].data() as Map<String, dynamic>;
+        final name = data["name"] ?? "Unknown";
+        final reason = data["reason"] ?? "No reason";
+
+        menuItems.add(
+          PopupMenuItem<int>(
+            value: i,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.pending_actions, color: Colors.red.shade600),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red.shade600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        "Reason: $reason",
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    }
+
+    await showMenu(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        position.dx,
+        position.dy,
+        position.dx + 1,
+        position.dy + 1,
+      ),
+      items: menuItems,
+      elevation: 8,
+      color: Colors.white,
+    );
   }
 
   // Fetch In NUBB
   bool isWithinAllowedDistance(double userLat, double userLon) {
+    // const double allowedLat = 11.5563738;
+    // const double allowedLon = 104.9282099;
     const double allowedLat = 13.0955211;
     const double allowedLon = 103.2137035;
     const double allowedRadiusMeters = 100;
@@ -166,132 +292,6 @@ class _TodayScreenState extends State<TodayScreen> {
       print('Error initializing location service: $e');
       showCustomSnackBar("Location service error: ${e.toString()}");
     }
-  }
-
-  // Method to show custom SnackBar
-  void showCustomSnackBar(String message, {bool isError = true}) {
-    if (!mounted) return; // Prevent SnackBar if not mounted
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: screenWidth / 24,
-            fontFamily: "NexaBold",
-          ),
-          textAlign: TextAlign.center,
-        ),
-        backgroundColor: isError ? Colors.red[700] : Colors.green[600],
-        behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.only(
-          top: screenHeight * 0.05,
-          left: screenWidth * 0.1,
-          right: screenWidth * 0.1,
-        ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: const Duration(seconds: 3),
-      ),
-    );
-  }
-
-  // Show Reason Dialog
-  Future<String?> _showReasonDialog(bool isLateCheckIn) async {
-    TextEditingController reasonController = TextEditingController();
-
-    return showDialog<String>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        //ត្រូវកែ ui
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          elevation: 16,
-          title: Row(
-            children: [
-              Icon(Icons.edit_note, color: Color(0xFFE53935)),
-              const SizedBox(width: 8),
-              Text(
-                isLateCheckIn
-                    ? "Late Check-in Reason"
-                    : "Early Check-out Reason",
-                style: TextStyle(
-                  color: Color(0xFFE53935),
-                  fontWeight: FontWeight.bold,
-                  fontFamily: "NexaBold",
-                ),
-              ),
-            ],
-          ),
-          content: Container(
-            decoration: BoxDecoration(
-              color: Color(0xFFFFFDE7), // light yellow
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Color(0xFFE53935).withOpacity(0.08),
-                  blurRadius: 8,
-                  offset: Offset(0, 2),
-                ),
-              ],
-            ),
-            child: TextField(
-              controller: reasonController,
-              decoration: InputDecoration(
-                hintText: "Please enter your reason",
-                filled: true,
-                fillColor: Color(0xFFFFFDE7),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Color(0xFFE53935), width: 1.2),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Color(0xFFE53935), width: 2),
-                ),
-              ),
-              maxLines: 3,
-              style: TextStyle(
-                fontFamily: "NexaRegular",
-                color: Colors.black87,
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(null);
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: Color(0xFFE53935),
-                textStyle: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFE53935),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 2,
-              ),
-              onPressed: () {
-                if (reasonController.text.trim().isEmpty) {
-                  return;
-                }
-                Navigator.of(context).pop(reasonController.text.trim());
-              },
-              child: const Text("Submit"),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   // Fetch Data
@@ -540,6 +540,138 @@ class _TodayScreenState extends State<TodayScreen> {
     }
   }
 
+  // Show Reason Dialog
+  Future<String?> _showReasonDialog(bool isLateCheckIn) async {
+    TextEditingController reasonController = TextEditingController();
+
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 16,
+          title: Row(
+            children: [
+              Icon(Icons.edit_note, color: Color(0xFFE53935)),
+              const SizedBox(width: 8),
+              Text(
+                isLateCheckIn
+                    ? "Late Check-in Reason"
+                    : "Early Check-out Reason",
+                style: TextStyle(
+                  color: Color(0xFFE53935),
+                  fontWeight: FontWeight.bold,
+                  fontFamily: "NexaBold",
+                ),
+              ),
+            ],
+          ),
+          content: Container(
+            decoration: BoxDecoration(
+              color: Color(0xFFFFFDE7), // light yellow
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0xFFE53935).withOpacity(0.08),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: TextField(
+              controller: reasonController,
+              decoration: InputDecoration(
+                hintText: "Please enter your reason",
+                filled: true,
+                fillColor: Color(0xFFFFFDE7),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Color(0xFFE53935), width: 1.2),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Color(0xFFE53935), width: 2),
+                ),
+              ),
+              maxLines: 3,
+              style: TextStyle(
+                fontFamily: "NexaRegular",
+                color: Colors.black87,
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(null);
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Color(0xFFE53935),
+                textStyle: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFFE53935),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+              ),
+              onPressed: () {
+                if (reasonController.text.trim().isEmpty) {
+                  return;
+                }
+                Navigator.of(context).pop(reasonController.text.trim());
+              },
+              child: const Text("Submit"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Method to show custom SnackBar
+  void showCustomSnackBar(String message, {bool isError = true}) async {
+    if (!mounted) return; // Prevent SnackBar if widget not mounted
+
+    // Play appropriate sound first
+    await _player.play(
+      AssetSource(isError ? 'sounds/checkout.mp3' : 'sounds/checkin.mp3'),
+    );
+
+    // Then show the SnackBar
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: screenWidth / 24,
+            fontFamily: "NexaBold",
+          ),
+          textAlign: TextAlign.center,
+        ),
+        backgroundColor: isError ? Colors.red[700] : Colors.green[600],
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.only(
+          top: screenHeight * 0.05,
+          left: screenWidth * 0.1,
+          right: screenWidth * 0.1,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     screenHeight = MediaQuery.of(context).size.height;
@@ -547,53 +679,102 @@ class _TodayScreenState extends State<TodayScreen> {
 
     // Modern red color
     primary = const Color(0xFFE53935); // Red 600
-    // Color background = Colors.white;
 
     return Scaffold(
-      // backgroundColor: background,
+      appBar: AppBar(
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 12),
+            Text(
+              "Welcome, ${User.lastName} ${User.firstName}",
+              style: TextStyle(
+                color: primary,
+                fontFamily: "NexaRegular",
+                fontSize: screenWidth / 34,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Text(
+              "Student ID: ${User.employeeId}",
+              style: TextStyle(
+                color: Colors.black,
+                fontFamily: "NexaRegular",
+                fontSize: screenWidth / 40,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          if (User.isAdmin)
+            Padding(
+              padding: const EdgeInsets.only(right: 16.0),
+              child: GestureDetector(
+                onTapDown: (TapDownDetails details) {
+                  _showPopupMenu(details.globalPosition);
+                },
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(
+                      Icons.notifications,
+                      color: Colors.black87,
+                      size: 28,
+                    ),
+                    if (_pendingRequestCount > 0)
+                      Positioned(
+                        right: -4,
+                        top: -4,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade600,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.red.shade900.withOpacity(0.6),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 20,
+                            minHeight: 18,
+                          ),
+                          child: Center(
+                            child: Text(
+                              '$_pendingRequestCount',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                height: 1,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
-            Container(
-              alignment: Alignment.centerLeft,
-              margin: const EdgeInsets.only(
-                top: 10,
-                bottom: 6,
-              ), // slightly reduced margins
-              child: Text(
-                "Welcome, ${User.lastName} ${User.firstName}",
-                style: TextStyle(
-                  color: primary,
-                  fontFamily: "NexaRegular",
-                  fontSize: screenWidth / 34,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1.1,
-                ),
-              ),
-            ),
-            Container(
-              alignment: Alignment.centerLeft,
-              margin: const EdgeInsets.only(
-                bottom: 16,
-              ), // reduced bottom margin
-              child: Text(
-                "Student ID: ${User.employeeId}",
-                style: TextStyle(
-                  fontFamily: "NexaRegular",
-                  fontSize: screenWidth / 34,
-                  color: Colors.black87,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-
             // Status Card
             Container(
               width: double.infinity,
-              margin: const EdgeInsets.only(bottom: 32),
+              margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [primary, primary.withOpacity(0.8)],
@@ -711,7 +892,7 @@ class _TodayScreenState extends State<TodayScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 10),
             // Slide Action
             checkOut == "--/--"
                 ? Container(
@@ -722,8 +903,8 @@ class _TodayScreenState extends State<TodayScreen> {
                         key: _slideKey,
                         text:
                             checkIn == "--/--"
-                                ? "Slide to Check In >>>"
-                                : "Slide to Check Out >>>",
+                                ? "Slide to Check-In >>>"
+                                : "Slide to Check-Out >>>",
                         textStyle: TextStyle(
                           color: primary,
                           fontSize: screenWidth / 22,
@@ -733,7 +914,7 @@ class _TodayScreenState extends State<TodayScreen> {
                         outerColor: Colors.white,
                         innerColor: primary,
                         elevation: 4,
-                        borderRadius: 16,
+                        borderRadius: 32,
                         onSubmit: () async {
                           if (!mounted) return;
 
@@ -910,7 +1091,7 @@ class _TodayScreenState extends State<TodayScreen> {
                     "You have completed this day!",
                     style: TextStyle(
                       fontFamily: "NexaRegular",
-                      fontSize: screenWidth / 24,
+                      fontSize: screenWidth / 28,
                       color: primary,
                       fontWeight: FontWeight.bold,
                     ),
@@ -922,14 +1103,14 @@ class _TodayScreenState extends State<TodayScreen> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
                   children: [
-                    Icon(Icons.location_on, color: primary, size: 20),
+                    Icon(Icons.location_on, color: primary, size: 24),
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
                         "Check-in: $checkInLocation",
                         style: TextStyle(
                           color: const Color.fromARGB(255, 0, 183, 6),
-                          fontSize: screenWidth / 28,
+                          fontSize: screenWidth / 38,
                           fontFamily: "NexaRegular",
                         ),
                         textAlign: TextAlign.center,
@@ -943,14 +1124,14 @@ class _TodayScreenState extends State<TodayScreen> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
                   children: [
-                    Icon(Icons.location_on, color: primary, size: 20),
+                    Icon(Icons.location_on, color: primary, size: 24),
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
                         "Check-out: $checkOutLocation",
                         style: TextStyle(
                           color: Colors.blueGrey,
-                          fontSize: screenWidth / 28,
+                          fontSize: screenWidth / 38,
                           fontFamily: "NexaRegular",
                         ),
                         textAlign: TextAlign.center,
@@ -1007,8 +1188,8 @@ class _TodayScreenState extends State<TodayScreen> {
                         margin: const EdgeInsets.only(top: 12),
                         child: Text(
                           checkIn == "--/--"
-                              ? "Scan to Check In"
-                              : "Scan to Check Out",
+                              ? "Scan to Check-In"
+                              : "Scan to Check-Out",
                           style: TextStyle(
                             fontFamily: "NexaRegular",
                             fontSize: screenWidth / 22,
@@ -1023,7 +1204,7 @@ class _TodayScreenState extends State<TodayScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 5),
           ],
         ),
       ),

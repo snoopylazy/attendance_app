@@ -43,36 +43,36 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Fetch User
-  Future<void> _initializeUser() async {
-    // Wait to get User.id first
-    QuerySnapshot snap =
-        await FirebaseFirestore.instance
-            .collection("Employee")
-            .where('id', isEqualTo: User.employeeId)
-            .get();
+  // Future<void> _initializeUser() async {
+  //   // Wait to get User.id first
+  //   QuerySnapshot snap =
+  //       await FirebaseFirestore.instance
+  //           .collection("Employee")
+  //           .where('id', isEqualTo: User.employeeId)
+  //           .get();
 
-    if (snap.docs.isNotEmpty) {
-      User.id = snap.docs[0].id;
+  //   if (snap.docs.isNotEmpty) {
+  //     User.id = snap.docs[0].id;
 
-      // Then fetch credentials and profile
-      DocumentSnapshot doc =
-          await FirebaseFirestore.instance
-              .collection("Employee")
-              .doc(User.id)
-              .get();
+  //     // Then fetch credentials and profile
+  //     DocumentSnapshot doc =
+  //         await FirebaseFirestore.instance
+  //             .collection("Employee")
+  //             .doc(User.id)
+  //             .get();
 
-      setState(() {
-        User.canEdit = doc['canEdit'];
-        User.firstName = doc['firstName'];
-        User.lastName = doc['lastName'];
-        User.birthDate = doc['birthDate'];
-        User.address = doc['address'];
-        User.profilePicLink = doc['profilePic'];
-      });
-    } else {
-      debugPrint("No user found with employeeId ${User.employeeId}");
-    }
-  }
+  //     setState(() {
+  //       User.canEdit = doc['canEdit'];
+  //       User.firstName = doc['firstName'];
+  //       User.lastName = doc['lastName'];
+  //       User.birthDate = doc['birthDate'];
+  //       User.address = doc['address'];
+  //       User.profilePicLink = doc['profilePic'];
+  //     });
+  //   } else {
+  //     debugPrint("No user found with employeeId ${User.employeeId}");
+  //   }
+  // }
 
   // GetPermissioon
   void _getCredentials() async {
@@ -178,10 +178,38 @@ class _HomeScreenState extends State<HomeScreen> {
             tabBackgroundColor: primary.withOpacity(0.15),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             tabs: const [
-              GButton(icon: FontAwesomeIcons.calendarDays, text: 'Report'),
-              GButton(icon: FontAwesomeIcons.check, text: 'Check-In'),
-              GButton(icon: FontAwesomeIcons.paperPlane, text: 'Request'),
-              GButton(icon: FontAwesomeIcons.user, text: 'Profile'),
+              GButton(
+                icon: FontAwesomeIcons.calendarDays,
+                text: 'Report',
+                textStyle: TextStyle(
+                  fontFamily: 'NexaRegular',
+                  color: Colors.red,
+                ),
+              ),
+              GButton(
+                icon: FontAwesomeIcons.check,
+                text: 'Check-In',
+                textStyle: TextStyle(
+                  fontFamily: 'NexaRegular',
+                  color: Colors.red,
+                ),
+              ),
+              GButton(
+                icon: FontAwesomeIcons.paperPlane,
+                text: 'Request',
+                textStyle: TextStyle(
+                  fontFamily: 'NexaRegular',
+                  color: Colors.red,
+                ),
+              ),
+              GButton(
+                icon: FontAwesomeIcons.user,
+                text: 'Profile',
+                textStyle: TextStyle(
+                  fontFamily: 'NexaRegular',
+                  color: Colors.red,
+                ),
+              ),
             ],
           ),
         ),

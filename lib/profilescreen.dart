@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -25,6 +26,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   TextEditingController firstNameController = TextEditingController();
   TextEditingController lastNameController = TextEditingController();
   TextEditingController addressController = TextEditingController();
+
+  // Add AudioPlayer instance
+  final AudioPlayer _player = AudioPlayer();
 
   @override
   void initState() {
@@ -247,7 +251,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                                 content: const Text(
                                   'Are you sure you want to logout?',
-                                  style: TextStyle(fontSize: 15),
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontFamily: "NexaRegular",
+                                  ),
                                 ),
                                 actions: [
                                   TextButton(
@@ -258,6 +265,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       style: TextStyle(
                                         color: Colors.grey,
                                         fontWeight: FontWeight.w600,
+                                        fontFamily: "NexaBold",
                                       ),
                                     ),
                                   ),
@@ -269,6 +277,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       style: TextStyle(
                                         color: Colors.red[600],
                                         fontWeight: FontWeight.bold,
+                                        fontFamily: "NexaBold",
                                       ),
                                     ),
                                   ),
@@ -429,7 +438,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   initialDate: DateTime.now(),
                   firstDate: DateTime(1950),
                   lastDate: DateTime.now(),
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: ColorScheme.light(
+                          primary: Colors.red[600]!, // Header & selected date
+                          onPrimary: Colors.white, // Text on header
+                          onSurface: Colors.black, // Default text
+                        ),
+                        textButtonTheme: TextButtonThemeData(
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.red[600],
+                          ),
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
                 );
+
                 if (picked != null) {
                   setState(() {
                     birth = DateFormat("MM/dd/yyyy").format(picked);
@@ -550,9 +577,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void showSnackBar(String text) {
+  void showSnackBar(String text) async {
+    await _player.play(AssetSource('sounds/successSounds.wav'));
+
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(behavior: SnackBarBehavior.floating, content: Text(text)),
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 8,
+        backgroundColor: Colors.blueGrey.shade700,
+        content: Row(
+          children: [
+            const Icon(Icons.info_outline, color: Colors.white, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontFamily: "NexaBold",
+                ),
+              ),
+            ),
+          ],
+        ),
+        duration: const Duration(seconds: 3),
+      ),
     );
   }
 }
