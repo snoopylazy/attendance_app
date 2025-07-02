@@ -7,7 +7,7 @@
     <uses-permission android:name="android.permission.CAMERA" />
 
     <application
-        android:label="attendance_app"
+        android:label="Check-In App"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 
