@@ -12,6 +12,7 @@ import 'package:slide_to_act/slide_to_act.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:audioplayers/audioplayers.dart';
+import 'package:http/http.dart' as http;
 
 class TodayScreen extends StatefulWidget {
   const TodayScreen({Key? key}) : super(key: key);
@@ -72,18 +73,21 @@ class _TodayScreenState extends State<TodayScreen> {
     super.dispose();
   }
 
-  // Fetch All Request Absent
-  // void _fetchPendingRequests() async {
-  //   QuerySnapshot snapshot =
-  //       await FirebaseFirestore.instance
-  //           .collection("requestabsent")
-  //           .where("status", isEqualTo: "Pending")
-  //           .get();
+  Future<void> sendTelegramMessage(String message) async {
+    const String botToken = '7876712552:AAGl4DL9rJOvbcJVtJ-OqEH8_C-_gJ-qLw0';
+    const String chatId = '1088041386';
 
-  //   setState(() {
-  //     _pendingRequestCount = snapshot.docs.length;
-  //   });
-  // }
+    final String url = 'https://api.telegram.org/bot$botToken/sendMessage';
+
+    try {
+      await http.post(
+        Uri.parse(url),
+        body: {'chat_id': chatId, 'text': message, 'parse_mode': 'Markdown'},
+      );
+    } catch (e) {
+      print("Telegram message error: $e");
+    }
+  }
 
   // Notification
   void _showPopupMenu(Offset position) async {
@@ -170,11 +174,11 @@ class _TodayScreenState extends State<TodayScreen> {
 
   // Fetch In NUBB
   bool isWithinAllowedDistance(double userLat, double userLon) {
-    // const double allowedLat = 11.5563738;
-    // const double allowedLon = 104.9282099;
-    const double allowedLat = 13.0955211;
-    const double allowedLon = 103.2137035;
-    const double allowedRadiusMeters = 100;
+    // const double allowedLat = 11.2237383;
+    // const double allowedLon = 105.1258955;
+    const double allowedLat = 13.0903905;
+    const double allowedLon = 103.2165881;
+    const double allowedRadiusMeters = 1000;
 
     double distance = geo.Geolocator.distanceBetween(
       userLat,
@@ -196,9 +200,8 @@ class _TodayScreenState extends State<TodayScreen> {
 
   // Define your custom locations
   final Map<String, Map<String, double>> customLocations = {
-    'NUBB': {'lat': 13.0955211, 'lon': 103.2137035, 'radius': 200.0},
-    'Main Office': {'lat': 13.0862629, 'lon': 103.2197316, 'radius': 200.0},
-    // Add more locations as needed
+    'NUBB': {'lat': 13.0903905, 'lon': 103.2165881, 'radius': 1000.0},
+    'Main Office': {'lat': 13.0862629, 'lon': 103.2197316, 'radius': 1000.0},
   };
 
   // Store location
@@ -1040,6 +1043,9 @@ class _TodayScreenState extends State<TodayScreen> {
                               "Check-in recorded successfully!",
                               isError: false,
                             );
+                            await sendTelegramMessage(
+                              "🕘 *Check-In*\n👤 ${User.firstName} ${User.lastName}\n📅 ${DateFormat('dd MMM yyyy').format(DateTime.now())}\n⏰ $newCheckIn\n📍 $checkInLocation",
+                            );
                           } else if (checkOut == "--/--") {
                             String oldCheckIn = snap2['checkIn'];
                             String newCheckOut = DateFormat(
@@ -1076,6 +1082,9 @@ class _TodayScreenState extends State<TodayScreen> {
                             showCustomSnackBar(
                               "Check-out recorded successfully!",
                               isError: false,
+                            );
+                            await sendTelegramMessage(
+                              "🕔 *Check-Out*\n👤 ${User.firstName} ${User.lastName}\n📅 ${DateFormat('dd MMM yyyy').format(DateTime.now())}\n⏰ $newCheckOut\n📍 $checkOutLocation",
                             );
                           }
 

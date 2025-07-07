@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:attendance_app/registerscreen.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:lottie/lottie.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -110,11 +111,21 @@ class _LoginScreenState extends State<LoginScreen> {
     screenWidth = MediaQuery.of(context).size.width;
 
     if (_showSplash) {
-      // Splash screen UI
       return Scaffold(
-        backgroundColor: primary,
+        backgroundColor: Colors.white,
         body: Center(
-          child: Icon(Icons.person, color: Colors.white, size: screenWidth / 3),
+          child: Lottie.asset(
+            'assets/splashscreen.json',
+            width: screenWidth / 2,
+            onLoaded: (composition) {
+              // Auto hide splash after animation duration
+              Future.delayed(composition.duration, () {
+                setState(() {
+                  _showSplash = false;
+                });
+              });
+            },
+          ),
         ),
       );
     }

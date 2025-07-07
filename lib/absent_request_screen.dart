@@ -25,17 +25,64 @@ class _AbsentRequestScreenState extends State<AbsentRequestScreen> {
     if (_fromDate == null || _toDate == null || _reasonController.text.isEmpty)
       return;
 
+    // Convert to string for easier comparison
+    String fromDateStr = _fromDate!.toIso8601String();
+    String toDateStr = _toDate!.toIso8601String();
+
+    // Check if a similar request already exists
+    final existingRequests =
+        await FirebaseFirestore.instance
+            .collection('requestabsent')
+            .where('employeeId', isEqualTo: User.employeeId)
+            .where('fromDate', isEqualTo: fromDateStr)
+            .where('toDate', isEqualTo: toDateStr)
+            .get();
+
+    if (existingRequests.docs.isNotEmpty) {
+      // Duplicate found - show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  "Request already submitted for this date range",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontFamily: "NexaBold",
+                  ),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.red.shade600,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 8,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    // Add new request if no duplicates found
     await FirebaseFirestore.instance.collection('requestabsent').add({
       'employeeId': User.employeeId,
       'name': "${User.firstName} ${User.lastName}",
-      'fromDate': _fromDate!.toIso8601String(),
-      'toDate': _toDate!.toIso8601String(),
+      'fromDate': fromDateStr,
+      'toDate': toDateStr,
       'reason': _reasonController.text.trim(),
       'status': 'Pending',
       'timestamp': Timestamp.now(),
     });
 
-    // Show Message
+    // Show success message
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(

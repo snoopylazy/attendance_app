@@ -182,7 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: FontAwesomeIcons.calendarDays,
                 text: 'Report',
                 textStyle: TextStyle(
-                  fontFamily: 'NexaRegular',
+                  fontFamily: 'NexaBold',
                   color: Colors.red,
                 ),
               ),
@@ -190,7 +190,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: FontAwesomeIcons.check,
                 text: 'Check-In',
                 textStyle: TextStyle(
-                  fontFamily: 'NexaRegular',
+                  fontFamily: 'NexaBold',
                   color: Colors.red,
                 ),
               ),
@@ -198,7 +198,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: FontAwesomeIcons.paperPlane,
                 text: 'Request',
                 textStyle: TextStyle(
-                  fontFamily: 'NexaRegular',
+                  fontFamily: 'NexaBold',
                   color: Colors.red,
                 ),
               ),
@@ -206,7 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: FontAwesomeIcons.user,
                 text: 'Profile',
                 textStyle: TextStyle(
-                  fontFamily: 'NexaRegular',
+                  fontFamily: 'NexaBold',
                   color: Colors.red,
                 ),
               ),
